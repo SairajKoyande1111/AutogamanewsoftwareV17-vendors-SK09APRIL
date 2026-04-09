@@ -920,7 +920,8 @@ export class MongoStorage implements IStorage {
             price: s.price,
             type: "Service",
             technician: s.technician,
-            vehicleType: (j as any).vehicleType
+            vehicleType: (j as any).vehicleType,
+            hsnCode: s.hsnCode || ""
           });
         }
       });
@@ -935,7 +936,8 @@ export class MongoStorage implements IStorage {
             vehicleType: (j as any).vehicleType,
             rollUsed: p.rollUsed,
             technician: p.technician,
-            category: p.ppfId || p.id
+            category: p.ppfId || p.id,
+            hsnCode: p.hsnCode || ""
           });
         }
       });
@@ -948,7 +950,8 @@ export class MongoStorage implements IStorage {
               price: a.price,
               quantity: a.quantity || 1,
               type: "Accessory",
-              category: a.accessoryId || a.id
+              category: a.accessoryId || a.id,
+              hsnCode: a.hsnCode || ""
             });
           }
         });
@@ -1245,7 +1248,8 @@ export class MongoStorage implements IStorage {
             price: s.price, 
             type: "Service",
             technician: (s as any).technician,
-            vehicleType: (j as any).vehicleType
+            vehicleType: (j as any).vehicleType,
+            hsnCode: (s as any).hsnCode || ""
           });
         }
       });
@@ -1261,7 +1265,8 @@ export class MongoStorage implements IStorage {
             vehicleType: (j as any).vehicleType,
             rollUsed: (p as any).rollUsed,
             technician: (p as any).technician,
-            category: (p as any).ppfId || p.id // Use ppfId as category for stock replenishment
+            category: (p as any).ppfId || p.id, // Use ppfId as category for stock replenishment
+            hsnCode: (p as any).hsnCode || ""
           });
         }
       });
@@ -1286,7 +1291,8 @@ export class MongoStorage implements IStorage {
               price: a.price, 
               quantity: (a as any).quantity || 1, 
               type: "Accessory",
-              category: categoryName
+              category: categoryName,
+              hsnCode: (a as any).hsnCode || ""
             });
           }
         }

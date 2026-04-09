@@ -185,6 +185,7 @@ export const jobCardItemSchema = z.object({
   price: z.number(),
   technician: z.string().optional(),
   business: z.enum(["Auto Gamma", "AGNX"]).default("Auto Gamma"),
+  hsnCode: z.string().optional().default(""),
 });
 
 export const jobCardSchema = z.object({
@@ -237,6 +238,7 @@ export const invoiceItemSchema = z.object({
   vehicleType: z.string().optional(),
   rollUsed: z.number().optional(),
   technician: z.string().optional(),
+  hsnCode: z.string().optional(),
 });
 
 export type InvoiceItem = z.infer<typeof invoiceItemSchema>;
