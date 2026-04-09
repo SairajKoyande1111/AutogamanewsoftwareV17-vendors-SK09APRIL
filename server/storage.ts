@@ -1064,7 +1064,8 @@ export class MongoStorage implements IStorage {
                 (r._id && r._id.toString() === entry.rollId) || r.id === entry.rollId
               );
               if (roll && entry.rollUsed > 0) {
-                roll.stock -= entry.rollUsed;
+                // After any job use, the full roll is considered consumed — remaining sqft auto-moves to used rolls
+                roll.stock = 0;
               }
             }
             ppfMaster.markModified("rolls");
@@ -1201,9 +1202,10 @@ export class MongoStorage implements IStorage {
               (r._id && r._id.toString() === rollId) || r.id === rollId
             );
             if (roll) {
-              roll.stock -= delta;
+              // After any job use, the full roll is considered consumed — remaining sqft auto-moves to used rolls
+              roll.stock = 0;
               modified = true;
-              console.log(`Deducted ${delta} sqft from roll ${roll.name} during JobCard update (new invoice will be created)`);
+              console.log(`Deducted ${delta} sqft from roll ${roll.name} during JobCard update (new invoice will be created) — roll zeroed out`);
             }
           }
           if (modified) {
@@ -1376,10 +1378,11 @@ export class MongoStorage implements IStorage {
                       );
 
                       if (roll) {
-                        roll.stock -= deductQty;
+                        // After any job use, the full roll is considered consumed — remaining sqft auto-moves to used rolls
+                        roll.stock = 0;
                         ppfMaster.markModified("rolls");
                         await ppfMaster.save();
-                        console.log(`[JOB CARD UPDATE EXCEPTION] Deducted incremental ${deductQty} sqft from roll ${roll.name} (Old: ${oldQty}, New: ${qty})`);
+                        console.log(`[JOB CARD UPDATE EXCEPTION] Deducted incremental ${deductQty} sqft from roll ${roll.name} (Old: ${oldQty}, New: ${qty}) — roll zeroed out`);
                       }
                     }
                   }
@@ -1448,9 +1451,10 @@ export class MongoStorage implements IStorage {
                       (rawRollName.toLowerCase().includes(r.name.toLowerCase()))
                     );
                     if (roll && !isNaN(qty)) {
-                      roll.stock -= qty;
+                      // After any job use, the full roll is considered consumed — remaining sqft auto-moves to used rolls
+                      roll.stock = 0;
                       deducted = true;
-                      console.log(`Deducted ${qty} sqft from roll ${roll.name} for JobCard update (Parsed from name)`);
+                      console.log(`Deducted ${qty} sqft from roll ${roll.name} for JobCard update (Parsed from name) — roll zeroed out`);
                     }
                   }
                   // Update the item's rollUsed field
@@ -1895,10 +1899,11 @@ export class MongoStorage implements IStorage {
                   );
 
                   if (roll) {
-                    roll.stock -= deductQty;
+                    // After any job use, the full roll is considered consumed — remaining sqft auto-moves to used rolls
+                    roll.stock = 0;
                     ppfMaster.markModified("rolls");
                     await ppfMaster.save();
-                    console.log(`[INVOICE UPDATE EXCEPTION] Deducted incremental ${deductQty} sqft from roll ${roll.name} (Old: ${oldQty}, New: ${qty})`);
+                    console.log(`[INVOICE UPDATE EXCEPTION] Deducted incremental ${deductQty} sqft from roll ${roll.name} (Old: ${oldQty}, New: ${qty}) — roll zeroed out`);
                   }
                 }
               }
