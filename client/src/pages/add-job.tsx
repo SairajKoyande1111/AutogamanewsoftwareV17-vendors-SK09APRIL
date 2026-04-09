@@ -1497,7 +1497,7 @@ export default function AddJobPage() {
                         <SelectValue placeholder="Select Roll" />
                       </SelectTrigger>
                       <SelectContent>
-                        {currentPPF?.rolls?.filter((roll: any) => (roll.stock || 0) > 0).map((roll: any) => (
+                        {currentPPF?.rolls?.filter((roll: any) => (roll.stock || 0) > 10).map((roll: any) => (
                           <SelectItem key={roll._id || roll.id} value={(roll._id || roll.id)!}>
                             {roll.name} ({(() => {
                               const used = form.watch("ppfs")
@@ -1544,7 +1544,7 @@ export default function AddJobPage() {
                     <div className="h-11 flex items-center px-3 border rounded-md bg-slate-50 font-medium text-slate-700">
                       {selectedPPF ? (() => {
                         const totalStock = currentPPF?.rolls
-                          ?.filter((r: any) => (r.stock || 0) > 0)
+                          ?.filter((r: any) => (r.stock || 0) > 10)
                           .reduce((acc: number, r: any) => acc + (r.stock || 0), 0) || 0;
                         const usedInCurrentJob = ppfFields.reduce((acc, field: any) => {
                           const isSamePPF = field.ppfId === selectedPPF;
