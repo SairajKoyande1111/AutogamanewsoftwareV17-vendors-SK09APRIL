@@ -239,7 +239,7 @@ function ItemRow({ idx, item, ppfMasters, accessories, categories, vehicleTypes,
       <div className="flex items-center gap-2">
         <Select
           value={item.itemType}
-          onValueChange={v => { setIsNewPPF(false); setIsNewCategory(false); setIsNewAccessory(false); onChange(idx, { ...item, itemType: v as "PPF" | "Accessory", name: "", categoryName: "" }); }}
+          onValueChange={v => { setIsNewPPF(false); setIsNewCategory(false); setIsNewAccessory(false); onChange(idx, { ...item, itemType: v as "PPF" | "Accessory", name: "", categoryName: "", unit: v === "Accessory" ? "pcs" : "sqft" }); }}
         >
           <SelectTrigger data-testid={`select-item-type-${idx}`} className="h-8 text-xs w-28 flex-shrink-0">
             <SelectValue />
@@ -354,8 +354,8 @@ function ItemRow({ idx, item, ppfMasters, accessories, categories, vehicleTypes,
         />
       )}
 
-      {/* Row 3: HSN | Qty | Unit | Unit Price | Subtotal */}
-      <div className="grid grid-cols-[1fr_72px_80px_100px_auto] gap-2 items-center">
+      {/* Row 3: HSN | Qty | Unit | Unit Price | Selling Price | Subtotal */}
+      <div className="grid grid-cols-[1fr_72px_80px_100px_100px_auto] gap-2 items-center">
         <HsnCombobox value={(item as any).hsnCode || ""} onChange={v => onChange(idx, { ...item, hsnCode: v })} idx={idx} />
         <Input
           data-testid={`input-item-qty-${idx}`}
@@ -381,9 +381,18 @@ function ItemRow({ idx, item, ppfMasters, accessories, categories, vehicleTypes,
           className="h-8 text-xs"
           type="number"
           min={0}
-          placeholder="₹ Rate"
+          placeholder="₹ Unit Price"
           value={item.unitPrice}
           onChange={e => onChange(idx, { ...item, unitPrice: Number(e.target.value) })}
+        />
+        <Input
+          data-testid={`input-item-selling-price-${idx}`}
+          className="h-8 text-xs"
+          type="number"
+          min={0}
+          placeholder="₹ Sell Price"
+          value={(item as any).sellingPrice ?? 0}
+          onChange={e => onChange(idx, { ...item, sellingPrice: Number(e.target.value) })}
         />
         <span className="text-xs font-semibold text-primary whitespace-nowrap min-w-[60px] text-right">
           {formatCurrency(item.quantity * item.unitPrice)}
@@ -459,12 +468,12 @@ function PurchaseForm({ vendorId, vendorName, purchase, onClose }: PurchaseFormP
   const [notes, setNotes] = useState(purchase?.notes ?? "");
 
   const emptyItem = (): any => ({
-    itemType: "PPF", categoryName: "", name: "", rollName: "", ppfPricing: [], hsnCode: "", quantity: 1, unit: "sqft", unitPrice: 0,
+    itemType: "PPF", categoryName: "", name: "", rollName: "", ppfPricing: [], hsnCode: "", quantity: 1, unit: "sqft", unitPrice: 0, sellingPrice: 0,
   });
 
   const [items, setItems] = useState<any[]>(
     purchase?.items?.length
-      ? purchase.items.map((i: any) => ({ itemType: "PPF", categoryName: "", rollName: "", ppfPricing: [], hsnCode: "", ...i }))
+      ? purchase.items.map((i: any) => ({ itemType: "PPF", categoryName: "", rollName: "", ppfPricing: [], hsnCode: "", sellingPrice: 0, ...i }))
       : [emptyItem()]
   );
 
@@ -541,11 +550,12 @@ function PurchaseForm({ vendorId, vendorName, purchase, onClose }: PurchaseFormP
         </div>
 
         {/* Column hint */}
-        <div className="hidden sm:grid grid-cols-[1fr_72px_80px_100px_auto] gap-2 px-3 text-xs text-muted-foreground font-medium">
+        <div className="hidden sm:grid grid-cols-[1fr_72px_80px_100px_100px_auto] gap-2 px-3 text-xs text-muted-foreground font-medium">
           <span>HSN Code</span>
           <span className="text-center">Qty</span>
           <span>Unit</span>
-          <span>Rate (₹)</span>
+          <span>Unit Price (₹)</span>
+          <span>Selling Price (₹)</span>
           <span className="text-right min-w-[60px]">Amount</span>
         </div>
 
@@ -1016,7 +1026,8 @@ function VendorDetailView({ vendor, purchases, onBack, onEdit, onDelete, onAddPu
                       <tr>
                         <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Item</th>
                         <th className="text-center px-3 py-2 text-xs font-medium text-muted-foreground">Qty</th>
-                        <th className="text-right px-3 py-2 text-xs font-medium text-muted-foreground">Rate</th>
+                        <th className="text-right px-3 py-2 text-xs font-medium text-muted-foreground">Unit Price</th>
+                        <th className="text-right px-3 py-2 text-xs font-medium text-muted-foreground">Sell Price</th>
                         <th className="text-right px-3 py-2 text-xs font-medium text-muted-foreground">Total</th>
                       </tr>
                     </thead>
@@ -1025,26 +1036,39 @@ function VendorDetailView({ vendor, purchases, onBack, onEdit, onDelete, onAddPu
                         <tr key={i} className="text-xs">
                           <td className="px-3 py-2">
                             <div>
-                              {item.itemType && (
-                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary mr-1">{item.itemType}</span>
+                              <div className="flex items-center gap-1 flex-wrap">
+                                {item.itemType && (
+                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary">{item.itemType}</span>
+                                )}
+                                <span className="font-medium text-foreground">
+                                  {item.categoryName && item.categoryName !== "PPF" ? `${item.categoryName} › ` : ""}
+                                  {item.name}
+                                </span>
+                                {item.rollName && <span className="text-muted-foreground">({item.rollName})</span>}
+                              </div>
+                              {item.hsnCode && (
+                                <span className="inline-block mt-0.5 text-[10px] font-mono bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                                  HSN: {item.hsnCode}
+                                </span>
                               )}
-                              <span className="font-medium text-foreground">
-                                {item.categoryName && item.categoryName !== "PPF" ? `${item.categoryName} › ` : ""}
-                                {item.name}
-                              </span>
-                              {item.rollName && <span className="text-muted-foreground ml-1">({item.rollName})</span>}
-                              {item.hsnCode && <span className="block text-muted-foreground/60 font-mono mt-0.5">HSN: {item.hsnCode}</span>}
                             </div>
                           </td>
-                          <td className="px-3 py-2 text-center text-muted-foreground">{item.quantity} {item.unit}</td>
-                          <td className="px-3 py-2 text-right text-muted-foreground">{formatCurrency(item.unitPrice)}</td>
-                          <td className="px-3 py-2 text-right font-semibold text-foreground">{formatCurrency(item.quantity * item.unitPrice)}</td>
+                          <td className="px-3 py-2 text-center text-muted-foreground whitespace-nowrap">{item.quantity} {item.unit}</td>
+                          <td className="px-3 py-2 text-right text-muted-foreground whitespace-nowrap">{formatCurrency(item.unitPrice)}</td>
+                          <td className="px-3 py-2 text-right whitespace-nowrap">
+                            {item.sellingPrice ? (
+                              <span className="font-medium text-emerald-600">{formatCurrency(item.sellingPrice)}</span>
+                            ) : (
+                              <span className="text-muted-foreground/40">—</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-right font-semibold text-foreground whitespace-nowrap">{formatCurrency(item.quantity * item.unitPrice)}</td>
                         </tr>
                       ))}
                     </tbody>
                     <tfoot className="bg-muted/30 border-t border-border/40">
                       <tr>
-                        <td colSpan={3} className="px-3 py-2 text-xs font-medium text-muted-foreground">Total</td>
+                        <td colSpan={4} className="px-3 py-2 text-xs font-medium text-muted-foreground">Total</td>
                         <td className="px-3 py-2 text-right text-sm font-bold text-primary">{formatCurrency(viewingPurchase.totalAmount)}</td>
                       </tr>
                     </tfoot>
