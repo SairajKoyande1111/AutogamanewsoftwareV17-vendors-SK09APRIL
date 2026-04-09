@@ -65,8 +65,6 @@ function HsnCombobox({ value, onChange, placeholder }: { value: string; onChange
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState(value);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [dropPos, setDropPos] = useState<{ top: number; left: number; width: number } | null>(null);
-  const triggerRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setSearch(value); }, [value]);
   useEffect(() => {
@@ -77,33 +75,22 @@ function HsnCombobox({ value, onChange, placeholder }: { value: string; onChange
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const openDropdown = () => {
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setDropPos({ top: rect.bottom + window.scrollY + 4, left: rect.left + window.scrollX, width: Math.max(320, rect.width) });
-    }
-    setOpen(true);
-  };
-
   const filtered = HSN_CODES.filter(h =>
-    h.code.includes(search) || h.description.toLowerCase().includes(search.toLowerCase())
+    !search || h.code.includes(search) || h.description.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div ref={wrapRef} className="relative">
       <Input
-        ref={triggerRef}
         className="h-11 text-sm"
         placeholder={placeholder || "HSN code (search or type)..."}
         value={search}
-        onFocus={openDropdown}
-        onChange={e => { setSearch(e.target.value); onChange(e.target.value); openDropdown(); }}
+        onFocus={() => setOpen(true)}
+        onClick={() => setOpen(true)}
+        onChange={e => { setSearch(e.target.value); onChange(e.target.value); setOpen(true); }}
       />
-      {open && filtered.length > 0 && dropPos && (
-        <div
-          className="fixed z-[9999] bg-popover border border-border rounded-lg shadow-2xl max-h-52 overflow-y-auto"
-          style={{ top: dropPos.top, left: dropPos.left, width: dropPos.width }}
-        >
+      {open && filtered.length > 0 && (
+        <div className="absolute left-0 top-full mt-1 z-[9999] bg-white border border-border rounded-lg shadow-2xl max-h-52 overflow-y-auto min-w-[320px] w-full">
           {filtered.map(h => (
             <button
               key={h.code}
@@ -112,7 +99,7 @@ function HsnCombobox({ value, onChange, placeholder }: { value: string; onChange
               onMouseDown={e => { e.preventDefault(); onChange(h.code); setSearch(h.code); setOpen(false); }}
             >
               <div className="flex items-baseline gap-2">
-                <span className="font-mono font-bold text-xs text-primary">{h.code}</span>
+                <span className="font-mono font-bold text-xs text-red-600">{h.code}</span>
                 <span className="text-xs text-muted-foreground line-clamp-1">{h.description}</span>
               </div>
             </button>
