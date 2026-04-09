@@ -2,7 +2,7 @@ import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,26 +10,40 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Plus, Search, Building2, Phone, Mail, MapPin, Edit2, Trash2,
   ShoppingCart, Package, CalendarDays, ChevronDown, ChevronUp, X,
-  LayoutGrid, List, ArrowUpDown, SlidersHorizontal
+  ArrowLeft, LayoutGrid, List, ArrowUpDown, SlidersHorizontal,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Vendor, VendorPurchase, PurchaseItem, PPFMaster, AccessoryMaster, AccessoryCategory, VehicleType } from "@shared/schema";
 import { format } from "date-fns";
 
-const STATUS_COLORS: Record<string, string> = {
-  ordered: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  received: "bg-green-100 text-green-800 border-green-200",
-  partial: "bg-blue-100 text-blue-800 border-blue-200",
-};
-const STATUS_LABELS: Record<string, string> = {
-  ordered: "Ordered",
-  received: "Received",
-  partial: "Partial",
-};
+// ─── HSN Codes (from Auto Gamma GST/HSN reference sheet) ─────────────────────
+const HSN_CODES = [
+  { code: "998713", description: "PPF Installation / Ceramic Coating / Car Detailing / Paint Correction / Denting & Painting" },
+  { code: "998538", description: "Car Wash / Cleaning / Interior Cleaning" },
+  { code: "3919",   description: "PPF Film (Supply / Sale)" },
+  { code: "3824",   description: "Ceramic Coating Liquid" },
+  { code: "3405",   description: "Car Polish / Rubbing Compound" },
+  { code: "3402",   description: "Car Shampoo" },
+  { code: "6307",   description: "Microfiber Cloth" },
+  { code: "9603",   description: "Detailing Brush" },
+  { code: "87089900", description: "Seat Covers / Car Mats / Steering Cover / Body Kit / Roof Rails / Door Visor / Spoiler" },
+  { code: "94049099", description: "Car Neck Cushion" },
+  { code: "85198100", description: "Car Audio System / Music System" },
+  { code: "852859",  description: "Android CarPlay System" },
+  { code: "852580",  description: "Dash Camera" },
+  { code: "8708",    description: "General Motor Vehicle Parts" },
+  { code: "851810",  description: "Speaker / Subwoofer / Amplifier" },
+  { code: "85122020", description: "LED Headlights / Fog Lamps / LED Light Bar" },
+  { code: "94054090", description: "Ambient Light" },
+];
+
 const VENDOR_CATEGORIES = ["PPF", "Accessory"];
+const NEW_PPF_VALUE = "__new_ppf__";
+const NEW_ACCESSORY_VALUE = "__new_acc__";
+const NEW_CATEGORY_VALUE = "__new_cat__";
 
 function formatDate(dateStr: string) {
   if (!dateStr) return "—";
@@ -39,7 +53,57 @@ function formatCurrency(amount: number) {
   return `₹${amount.toLocaleString("en-IN")}`;
 }
 
-// ─── Vendor Form ───────────────────────────────────────────────────────────
+// ─── HSN Combobox ─────────────────────────────────────────────────────────────
+function HsnCombobox({ value, onChange, idx }: { value: string; onChange: (v: string) => void; idx: number }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState(value);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setSearch(value); }, [value]);
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const filtered = HSN_CODES.filter(h =>
+    h.code.includes(search) || h.description.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <Input
+        data-testid={`input-hsn-${idx}`}
+        className="h-8 text-xs"
+        placeholder="HSN code (search or type)..."
+        value={search}
+        onFocus={() => setOpen(true)}
+        onChange={e => { setSearch(e.target.value); onChange(e.target.value); setOpen(true); }}
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute z-50 top-full mt-1 left-0 w-80 bg-popover border border-border rounded-lg shadow-xl max-h-52 overflow-y-auto">
+          {filtered.map(h => (
+            <button
+              key={h.code}
+              type="button"
+              className="w-full text-left px-3 py-2 hover:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
+              onMouseDown={e => { e.preventDefault(); onChange(h.code); setSearch(h.code); setOpen(false); }}
+            >
+              <div className="flex items-baseline gap-2">
+                <span className="font-mono font-bold text-xs text-primary">{h.code}</span>
+                <span className="text-xs text-muted-foreground line-clamp-1">{h.description}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Vendor Form ──────────────────────────────────────────────────────────────
 interface VendorFormProps { vendor?: Vendor | null; onClose: () => void; }
 
 function VendorForm({ vendor, onClose }: VendorFormProps) {
@@ -78,26 +142,26 @@ function VendorForm({ vendor, onClose }: VendorFormProps) {
         <div className="space-y-1">
           <Label>Contact Person</Label>
           <Input data-testid="input-vendor-contact" value={form.contactPerson}
-            onChange={e => setForm(f => ({ ...f, contactPerson: e.target.value }))} placeholder="Contact name" />
+            onChange={e => setForm(f => ({ ...f, contactPerson: e.target.value }))} placeholder="Full name" />
+        </div>
+        <div className="space-y-1">
+          <Label>Category</Label>
+          <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
+            <SelectTrigger data-testid="select-vendor-category"><SelectValue placeholder="Select category" /></SelectTrigger>
+            <SelectContent>
+              {VENDOR_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-1">
           <Label>Phone</Label>
           <Input data-testid="input-vendor-phone" value={form.phone}
-            onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+91 XXXXXXXXXX" />
+            onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+91 98765 43210" />
         </div>
         <div className="space-y-1">
           <Label>Email</Label>
           <Input data-testid="input-vendor-email" type="email" value={form.email}
-            onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="vendor@email.com" />
-        </div>
-        <div className="space-y-1">
-          <Label>Type</Label>
-          <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
-            <SelectTrigger data-testid="select-vendor-category"><SelectValue placeholder="Select type" /></SelectTrigger>
-            <SelectContent>
-              {VENDOR_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-            </SelectContent>
-          </Select>
+            onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="vendor@example.com" />
         </div>
         <div className="col-span-2 space-y-1">
           <Label>Address</Label>
@@ -107,10 +171,10 @@ function VendorForm({ vendor, onClose }: VendorFormProps) {
         <div className="col-span-2 space-y-1">
           <Label>Notes</Label>
           <Textarea data-testid="input-vendor-notes" value={form.notes}
-            onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional notes..." rows={2} />
+            onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} placeholder="Additional notes..." />
         </div>
       </div>
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
         <Button data-testid="button-save-vendor" type="submit" disabled={isPending}>
           {isPending ? "Saving..." : vendor ? "Update Vendor" : "Add Vendor"}
@@ -120,385 +184,288 @@ function VendorForm({ vendor, onClose }: VendorFormProps) {
   );
 }
 
-// ─── Smart Item Row ────────────────────────────────────────────────────────
+// ─── Item Row ─────────────────────────────────────────────────────────────────
 interface ItemRowProps {
-  item: PurchaseItem; idx: number;
-  ppfMasters: PPFMaster[]; accessories: AccessoryMaster[]; categories: AccessoryCategory[];
+  idx: number;
+  item: PurchaseItem & { hsnCode?: string };
+  ppfMasters: PPFMaster[];
+  accessories: AccessoryMaster[];
+  categories: AccessoryCategory[];
   vehicleTypes: VehicleType[];
-  onChange: (idx: number, item: PurchaseItem) => void; onRemove: (idx: number) => void;
+  onChange: (idx: number, item: any) => void;
+  onRemove: (idx: number) => void;
 }
 
-const NEW_PPF_VALUE = "__new_ppf__";
-const NEW_CATEGORY_VALUE = "__new_category__";
-const NEW_ACCESSORY_VALUE = "__new_accessory__";
-
-function ItemRow({ item, idx, ppfMasters, accessories, categories, vehicleTypes, onChange, onRemove }: ItemRowProps) {
+function ItemRow({ idx, item, ppfMasters, accessories, categories, vehicleTypes, onChange, onRemove }: ItemRowProps) {
   const [isNewPPF, setIsNewPPF] = useState(false);
   const [isNewCategory, setIsNewCategory] = useState(false);
   const [isNewAccessory, setIsNewAccessory] = useState(false);
-  const [showPricing, setShowPricing] = useState(false);
+  const [showVehiclePricing, setShowVehiclePricing] = useState(false);
 
-  const filteredAccessories = item.categoryName
-    ? accessories.filter(a => a.category === item.categoryName)
-    : accessories;
+  const filteredAccessories = accessories.filter(a =>
+    (a.category || "").toLowerCase() === (item.categoryName || "").toLowerCase()
+  );
 
-  const ppfPricing: any[] = (item as any).ppfPricing || [];
-
-  const handleTypeChange = (newType: "PPF" | "Accessory") => {
-    setIsNewPPF(false);
-    setIsNewCategory(false);
-    setIsNewAccessory(false);
-    setShowPricing(false);
-    onChange(idx, { ...item, itemType: newType, categoryName: "", name: "", rollName: "", ppfPricing: [], unit: newType === "PPF" ? "sqft" : "pcs", unitPrice: 0, quantity: 1 });
+  const handlePPFSelect = (val: string) => {
+    if (val === NEW_PPF_VALUE) { setIsNewPPF(true); onChange(idx, { ...item, name: "", rollName: "", ppfPricing: [] }); }
+    else { setIsNewPPF(false); onChange(idx, { ...item, name: val }); }
+  };
+  const handleCategorySelect = (val: string) => {
+    if (val === NEW_CATEGORY_VALUE) { setIsNewCategory(true); onChange(idx, { ...item, categoryName: "", name: "" }); }
+    else { setIsNewCategory(false); onChange(idx, { ...item, categoryName: val, name: "" }); }
+  };
+  const handleAccessorySelect = (val: string) => {
+    if (val === NEW_ACCESSORY_VALUE) { setIsNewAccessory(true); onChange(idx, { ...item, name: "" }); }
+    else { setIsNewAccessory(false); onChange(idx, { ...item, name: val }); }
   };
 
-  const handlePPFSelect = (value: string) => {
-    if (value === NEW_PPF_VALUE) {
-      setIsNewPPF(true);
-      setShowPricing(false);
-      onChange(idx, { ...item, name: "", rollName: "", ppfPricing: [] });
-    } else {
-      setIsNewPPF(false);
-      setShowPricing(false);
-      onChange(idx, { ...item, name: value, ppfPricing: [] });
-    }
+  const addVehiclePricingRow = () => {
+    const pricing = Array.isArray(item.ppfPricing) ? item.ppfPricing : [];
+    onChange(idx, { ...item, ppfPricing: [...pricing, { vehicleType: "", warranty: "", price: 0 }] });
   };
-
-  const addVehiclePricing = (typeName: string) => {
-    if (ppfPricing.some((p: any) => p.vehicleType === typeName)) return;
-    const updated = [...ppfPricing, { vehicleType: typeName, options: [{ warrantyName: "", price: 0 }] }];
-    onChange(idx, { ...item, ppfPricing: updated } as any);
+  const updateVehiclePricingRow = (pi: number, field: string, val: string | number) => {
+    const pricing = [...((item.ppfPricing as any[]) || [])];
+    pricing[pi] = { ...pricing[pi], [field]: val };
+    onChange(idx, { ...item, ppfPricing: pricing });
   };
-
-  const removeVehiclePricing = (typeIndex: number) => {
-    const updated = ppfPricing.filter((_: any, i: number) => i !== typeIndex);
-    onChange(idx, { ...item, ppfPricing: updated } as any);
-  };
-
-  const addOption = (typeIndex: number) => {
-    const updated = ppfPricing.map((p: any, i: number) =>
-      i === typeIndex ? { ...p, options: [...p.options, { warrantyName: "", price: 0 }] } : p
-    );
-    onChange(idx, { ...item, ppfPricing: updated } as any);
-  };
-
-  const removeOption = (typeIndex: number, optIndex: number) => {
-    const updated = ppfPricing.map((p: any, i: number) =>
-      i === typeIndex ? { ...p, options: p.options.filter((_: any, oi: number) => oi !== optIndex) } : p
-    );
-    onChange(idx, { ...item, ppfPricing: updated } as any);
-  };
-
-  const updateOption = (typeIndex: number, optIndex: number, field: string, value: any) => {
-    const updated = ppfPricing.map((p: any, i: number) =>
-      i === typeIndex ? {
-        ...p,
-        options: p.options.map((opt: any, oi: number) => oi === optIndex ? { ...opt, [field]: value } : opt)
-      } : p
-    );
-    onChange(idx, { ...item, ppfPricing: updated } as any);
-  };
-
-  const handleCategorySelect = (value: string) => {
-    if (value === NEW_CATEGORY_VALUE) {
-      setIsNewCategory(true);
-      setIsNewAccessory(false);
-      onChange(idx, { ...item, categoryName: "", name: "" });
-    } else {
-      setIsNewCategory(false);
-      setIsNewAccessory(false);
-      onChange(idx, { ...item, categoryName: value, name: "" });
-    }
-  };
-
-  const handleAccessorySelect = (value: string) => {
-    if (value === NEW_ACCESSORY_VALUE) {
-      setIsNewAccessory(true);
-      onChange(idx, { ...item, name: "" });
-    } else {
-      setIsNewAccessory(false);
-      const acc = accessories.find(a => a.name === value);
-      onChange(idx, { ...item, name: value, unitPrice: acc?.price ?? item.unitPrice });
-    }
+  const removeVehiclePricingRow = (pi: number) => {
+    const pricing = ((item.ppfPricing as any[]) || []).filter((_: any, i: number) => i !== pi);
+    onChange(idx, { ...item, ppfPricing: pricing });
   };
 
   return (
-    <div className="rounded-lg border border-border/50 bg-muted/20 p-3 space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground w-5">{idx + 1}.</span>
-          <Select value={item.itemType} onValueChange={v => handleTypeChange(v as any)}>
-            <SelectTrigger data-testid={`select-item-type-${idx}`} className="h-8 w-36 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="PPF">PPF</SelectItem>
-              <SelectItem value="Accessory">Accessory</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <button data-testid={`button-remove-item-${idx}`} type="button" onClick={() => onRemove(idx)}
-          className="text-muted-foreground hover:text-destructive transition-colors">
-          <X className="h-4 w-4" />
+    <div className="rounded-lg border border-border/60 bg-card p-3 space-y-2">
+      {/* Row 1: Type selector + Name selector + Remove button */}
+      <div className="flex items-center gap-2">
+        <Select
+          value={item.itemType}
+          onValueChange={v => { setIsNewPPF(false); setIsNewCategory(false); setIsNewAccessory(false); onChange(idx, { ...item, itemType: v as "PPF" | "Accessory", name: "", categoryName: "" }); }}
+        >
+          <SelectTrigger data-testid={`select-item-type-${idx}`} className="h-8 text-xs w-28 flex-shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="PPF">PPF</SelectItem>
+            <SelectItem value="Accessory">Accessory</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {item.itemType === "PPF" && (
+          isNewPPF ? (
+            <div className="flex flex-1 gap-1">
+              <Input
+                data-testid={`input-new-ppf-name-${idx}`}
+                className="h-8 text-xs flex-1"
+                placeholder="New PPF brand name..."
+                value={item.name}
+                autoFocus
+                onChange={e => onChange(idx, { ...item, name: e.target.value })}
+              />
+              <button
+                type="button"
+                onClick={() => { setIsNewPPF(false); onChange(idx, { ...item, name: "" }); }}
+                className="h-8 w-8 flex items-center justify-center rounded border border-border text-muted-foreground hover:text-destructive flex-shrink-0 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <Select value={item.name} onValueChange={handlePPFSelect}>
+              <SelectTrigger data-testid={`select-ppf-brand-${idx}`} className="h-8 text-xs flex-1">
+                <SelectValue placeholder="Select PPF brand..." />
+              </SelectTrigger>
+              <SelectContent>
+                {ppfMasters.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+                <SelectItem value={NEW_PPF_VALUE} className="text-primary font-medium">
+                  <span className="flex items-center gap-1"><Plus className="h-3 w-3" /> Add new brand</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          )
+        )}
+
+        {item.itemType === "Accessory" && (
+          <div className="flex flex-1 gap-2">
+            {isNewCategory ? (
+              <Input
+                data-testid={`input-new-category-${idx}`}
+                className="h-8 text-xs flex-1"
+                placeholder="New category name..."
+                value={item.categoryName}
+                autoFocus
+                onChange={e => onChange(idx, { ...item, categoryName: e.target.value })}
+              />
+            ) : (
+              <Select value={item.categoryName} onValueChange={handleCategorySelect}>
+                <SelectTrigger data-testid={`select-category-${idx}`} className="h-8 text-xs flex-1">
+                  <SelectValue placeholder="Category..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                  <SelectItem value={NEW_CATEGORY_VALUE} className="text-primary font-medium">
+                    <span className="flex items-center gap-1"><Plus className="h-3 w-3" /> New category</span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            {isNewAccessory || isNewCategory ? (
+              <Input
+                data-testid={`input-new-accessory-name-${idx}`}
+                className="h-8 text-xs flex-1"
+                placeholder="Accessory name..."
+                value={item.name}
+                onChange={e => onChange(idx, { ...item, name: e.target.value })}
+              />
+            ) : (
+              <Select value={item.name} onValueChange={handleAccessorySelect} disabled={!item.categoryName}>
+                <SelectTrigger data-testid={`select-acc-item-${idx}`} className="h-8 text-xs flex-1">
+                  <SelectValue placeholder={item.categoryName ? "Accessory..." : "Pick category first"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredAccessories.map(a => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}
+                  {item.categoryName && (
+                    <SelectItem value={NEW_ACCESSORY_VALUE} className="text-primary font-medium">
+                      <span className="flex items-center gap-1"><Plus className="h-3 w-3" /> New accessory</span>
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => onRemove(idx)}
+          className="h-8 w-8 flex items-center justify-center rounded border border-border/60 text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors flex-shrink-0"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      {item.itemType === "PPF" && (
-        <div className="space-y-2">
-          {/* PPF Brand */}
-          <div className="space-y-1">
-            <Label className="text-xs">PPF Brand / Film *</Label>
-            {isNewPPF ? (
-              <div className="flex gap-1">
-                <Input
-                  data-testid={`input-new-ppf-name-${idx}`}
-                  className="h-8 text-xs flex-1"
-                  placeholder="Enter new PPF brand name..."
-                  value={item.name}
-                  autoFocus
-                  onChange={e => onChange(idx, { ...item, name: e.target.value })}
-                />
-                <button type="button" onClick={() => { setIsNewPPF(false); setShowPricing(false); onChange(idx, { ...item, name: "", ppfPricing: [] }); }}
-                  className="h-8 w-8 flex items-center justify-center rounded border border-border text-muted-foreground hover:text-destructive transition-colors flex-shrink-0">
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ) : (
-              <Select value={item.name || ""} onValueChange={handlePPFSelect}>
-                <SelectTrigger data-testid={`select-ppf-brand-${idx}`} className="h-8 text-xs">
-                  <SelectValue placeholder="Select PPF brand..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {ppfMasters.map(ppf => (
-                    <SelectItem key={ppf.id} value={ppf.name}>{ppf.name}</SelectItem>
-                  ))}
-                  <SelectItem value={NEW_PPF_VALUE} className="text-primary font-medium">
-                    <span className="flex items-center gap-1"><Plus className="h-3 w-3" /> Add new PPF brand</span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </div>
+      {/* Row 2: PPF Roll Name */}
+      {item.itemType === "PPF" && item.name && (
+        <Input
+          data-testid={`input-roll-name-${idx}`}
+          className="h-8 text-xs"
+          placeholder="Roll name (e.g. Roll A, Batch #001)..."
+          value={(item as any).rollName || ""}
+          onChange={e => onChange(idx, { ...item, rollName: e.target.value })}
+        />
+      )}
 
-          {/* Roll Name + Qty + Price in grid */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="space-y-1">
-              <Label className="text-xs">Roll Name *</Label>
-              <Input data-testid={`input-roll-name-${idx}`} className="h-8 text-xs"
-                placeholder="e.g. Roll 1, Front Roll"
-                value={(item as any).rollName || ""}
-                onChange={e => onChange(idx, { ...item, rollName: e.target.value } as any)} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Stock (sqft)</Label>
-              <Input data-testid={`input-item-qty-${idx}`} className="h-8 text-xs" type="number" min={0}
-                placeholder="0" value={item.quantity}
-                onChange={e => onChange(idx, { ...item, quantity: Number(e.target.value) })} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Unit Price (₹)</Label>
-              <Input data-testid={`input-item-price-${idx}`} className="h-8 text-xs" type="number" min={0}
-                placeholder="0" value={item.unitPrice}
-                onChange={e => onChange(idx, { ...item, unitPrice: Number(e.target.value) })} />
-            </div>
-          </div>
+      {/* Row 3: HSN | Qty | Unit | Unit Price | Subtotal */}
+      <div className="grid grid-cols-[1fr_72px_80px_100px_auto] gap-2 items-center">
+        <HsnCombobox value={(item as any).hsnCode || ""} onChange={v => onChange(idx, { ...item, hsnCode: v })} idx={idx} />
+        <Input
+          data-testid={`input-item-qty-${idx}`}
+          className="h-8 text-xs text-center"
+          type="number"
+          min={0}
+          placeholder="Qty"
+          value={item.quantity}
+          onChange={e => onChange(idx, { ...item, quantity: Number(e.target.value) })}
+        />
+        <Select value={item.unit} onValueChange={v => onChange(idx, { ...item, unit: v })}>
+          <SelectTrigger data-testid={`select-item-unit-${idx}`} className="h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {["sqft", "pcs", "roll", "ltr", "kg", "set", "box"].map(u => (
+              <SelectItem key={u} value={u}>{u}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          data-testid={`input-item-price-${idx}`}
+          className="h-8 text-xs"
+          type="number"
+          min={0}
+          placeholder="₹ Rate"
+          value={item.unitPrice}
+          onChange={e => onChange(idx, { ...item, unitPrice: Number(e.target.value) })}
+        />
+        <span className="text-xs font-semibold text-primary whitespace-nowrap min-w-[60px] text-right">
+          {formatCurrency(item.quantity * item.unitPrice)}
+        </span>
+      </div>
 
-          {/* Vehicle Type Pricing — only for new PPF brands */}
-          {isNewPPF && (
-            <div className="border border-dashed border-primary/40 rounded-lg p-2 space-y-2 bg-primary/5">
-              <button type="button"
-                onClick={() => setShowPricing(p => !p)}
-                className="w-full flex items-center justify-between text-xs font-semibold text-primary">
-                <span>Vehicle Type Pricing (optional)</span>
-                {showPricing ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              </button>
-
-              {showPricing && (
-                <div className="space-y-2 pt-1">
-                  <div className="flex items-center gap-2">
-                    <Select onValueChange={addVehiclePricing}>
-                      <SelectTrigger className="h-7 text-xs flex-1">
-                        <SelectValue placeholder="+ Add vehicle type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {vehicleTypes.map(vt => (
-                          <SelectItem key={vt.id} value={vt.name}
-                            disabled={ppfPricing.some((p: any) => p.vehicleType === vt.name)}>
-                            {vt.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {ppfPricing.map((vp: any, typeIdx: number) => (
-                    <div key={vp.vehicleType} className="rounded border border-border/60 bg-background p-2 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase text-primary">{vp.vehicleType}</span>
-                        <button type="button" onClick={() => removeVehiclePricing(typeIdx)}
-                          className="text-muted-foreground hover:text-destructive">
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                      {vp.options.map((opt: any, optIdx: number) => (
-                        <div key={optIdx} className="grid grid-cols-[1fr,80px,24px] gap-1 items-center">
-                          <Input className="h-7 text-xs" placeholder="Warranty (e.g. TPU 5Y Gloss)"
-                            value={opt.warrantyName}
-                            onChange={e => updateOption(typeIdx, optIdx, "warrantyName", e.target.value)} />
-                          <Input className="h-7 text-xs text-right" type="number" placeholder="₹"
-                            value={opt.price}
-                            onChange={e => updateOption(typeIdx, optIdx, "price", Number(e.target.value))} />
-                          <button type="button" onClick={() => removeOption(typeIdx, optIdx)}
-                            className="text-muted-foreground hover:text-destructive">
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
+      {/* Vehicle type pricing (new PPF brand only) */}
+      {item.itemType === "PPF" && isNewPPF && item.name && (
+        <div className="border-t border-dashed border-border/60 pt-2">
+          <button
+            type="button"
+            onClick={() => setShowVehiclePricing(v => !v)}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {showVehiclePricing ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            {showVehiclePricing ? "Hide" : "Add"} vehicle-type pricing (optional)
+          </button>
+          {showVehiclePricing && (
+            <div className="space-y-1.5 mt-2">
+              {((item.ppfPricing as any[]) || []).map((row: any, pi: number) => (
+                <div key={pi} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-1.5 items-center">
+                  <Select value={row.vehicleType} onValueChange={v => updateVehiclePricingRow(pi, "vehicleType", v)}>
+                    <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Vehicle type" /></SelectTrigger>
+                    <SelectContent>
+                      {vehicleTypes.map(vt => <SelectItem key={vt.id} value={vt.name}>{vt.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={row.warranty} onValueChange={v => updateVehiclePricingRow(pi, "warranty", v)}>
+                    <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Warranty" /></SelectTrigger>
+                    <SelectContent>
+                      {["1 Year", "2 Years", "3 Years", "5 Years", "Lifetime"].map(w => (
+                        <SelectItem key={w} value={w}>{w}</SelectItem>
                       ))}
-                      <button type="button" onClick={() => addOption(typeIdx)}
-                        className="text-xs text-primary flex items-center gap-1 hover:underline">
-                        <Plus className="h-3 w-3" /> Add warranty option
-                      </button>
-                    </div>
-                  ))}
-                  <p className="text-[10px] text-muted-foreground">Pricing can also be set later in Masters.</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {isNewPPF && (
-            <p className="text-xs text-primary">New PPF brand + roll will be added to Masters automatically.</p>
-          )}
-        </div>
-      )}
-
-      {item.itemType === "Accessory" && (
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <Label className="text-xs">Category *</Label>
-            {isNewCategory ? (
-              <div className="flex gap-1">
-                <Input
-                  data-testid={`input-new-category-name-${idx}`}
-                  className="h-8 text-xs flex-1"
-                  placeholder="New category name..."
-                  value={item.categoryName ?? ""}
-                  autoFocus
-                  onChange={e => onChange(idx, { ...item, categoryName: e.target.value, name: "" })}
-                />
-                <button type="button" onClick={() => { setIsNewCategory(false); onChange(idx, { ...item, categoryName: "", name: "" }); }}
-                  className="h-8 w-8 flex items-center justify-center rounded border border-border text-muted-foreground hover:text-destructive transition-colors flex-shrink-0">
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ) : (
-              <Select value={item.categoryName ?? ""} onValueChange={handleCategorySelect}>
-                <SelectTrigger data-testid={`select-acc-category-${idx}`} className="h-8 text-xs">
-                  <SelectValue placeholder="Select category..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map(cat => (
-                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                  ))}
-                  <SelectItem value={NEW_CATEGORY_VALUE} className="text-primary font-medium">
-                    <span className="flex items-center gap-1"><Plus className="h-3 w-3" /> Add new category</span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Accessory *</Label>
-            {isNewAccessory || isNewCategory ? (
-              <div className="flex gap-1">
-                <Input
-                  data-testid={`input-new-accessory-name-${idx}`}
-                  className="h-8 text-xs flex-1"
-                  placeholder="New accessory name..."
-                  value={item.name}
-                  autoFocus={isNewAccessory}
-                  onChange={e => onChange(idx, { ...item, name: e.target.value })}
-                />
-                {isNewAccessory && (
-                  <button type="button" onClick={() => { setIsNewAccessory(false); onChange(idx, { ...item, name: "" }); }}
-                    className="h-8 w-8 flex items-center justify-center rounded border border-border text-muted-foreground hover:text-destructive transition-colors flex-shrink-0">
-                    <X className="h-3.5 w-3.5" />
+                    </SelectContent>
+                  </Select>
+                  <Input className="h-7 text-xs" type="number" placeholder="₹ Price"
+                    value={row.price} onChange={e => updateVehiclePricingRow(pi, "price", Number(e.target.value))} />
+                  <button type="button" onClick={() => removeVehiclePricingRow(pi)}
+                    className="h-7 w-7 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors">
+                    <X className="h-3 w-3" />
                   </button>
-                )}
-              </div>
-            ) : (
-              <Select value={item.name} onValueChange={handleAccessorySelect} disabled={!item.categoryName}>
-                <SelectTrigger data-testid={`select-acc-item-${idx}`} className="h-8 text-xs">
-                  <SelectValue placeholder={item.categoryName ? "Select accessory..." : "Pick category first"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredAccessories.map(a => (
-                    <SelectItem key={a.id} value={a.name}>
-                      {a.name}
-                      <span className="text-muted-foreground ml-1">— ₹{a.price}</span>
-                    </SelectItem>
-                  ))}
-                  {item.categoryName && (
-                    <SelectItem value={NEW_ACCESSORY_VALUE} className="text-primary font-medium">
-                      <span className="flex items-center gap-1"><Plus className="h-3 w-3" /> Add new accessory</span>
-                    </SelectItem>
-                  )}
-                  {filteredAccessories.length === 0 && item.categoryName && (
-                    <div className="px-2 py-1.5 text-xs text-muted-foreground">No existing accessories — add new above</div>
-                  )}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-          {(isNewCategory || isNewAccessory) && (
-            <div className="col-span-2">
-              <p className="text-xs text-primary">
-                {isNewCategory ? "New category & accessory" : "New accessory"} will be automatically added to Masters.
-              </p>
+                </div>
+              ))}
+              <Button type="button" size="sm" variant="outline" className="h-6 text-xs" onClick={addVehiclePricingRow}>
+                <Plus className="h-3 w-3 mr-1" /> Add vehicle type
+              </Button>
             </div>
           )}
-          <div className="space-y-1">
-            <Label className="text-xs">Quantity</Label>
-            <Input data-testid={`input-item-qty-${idx}`} className="h-8 text-xs" type="number" min={0}
-              placeholder="0" value={item.quantity}
-              onChange={e => onChange(idx, { ...item, quantity: Number(e.target.value) })} />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Unit Price (₹)</Label>
-            <Input data-testid={`input-item-price-${idx}`} className="h-8 text-xs" type="number" min={0}
-              placeholder="0" value={item.unitPrice}
-              onChange={e => onChange(idx, { ...item, unitPrice: Number(e.target.value) })} />
-          </div>
         </div>
       )}
 
-      {item.name && (
-        <div className="text-xs text-right text-muted-foreground">
-          Subtotal: <span className="font-semibold text-primary">{formatCurrency(item.quantity * item.unitPrice)}</span>
-        </div>
+      {(isNewCategory || isNewAccessory) && (
+        <p className="text-xs text-primary">{isNewCategory ? "New category & accessory" : "New accessory"} will be auto-created in Masters.</p>
+      )}
+      {isNewPPF && item.name && (
+        <p className="text-xs text-primary">New PPF brand will be auto-created in Masters.</p>
       )}
     </div>
   );
 }
 
-// ─── Purchase Form ─────────────────────────────────────────────────────────
+// ─── Purchase Form ────────────────────────────────────────────────────────────
 interface PurchaseFormProps {
-  vendorId: string; vendorName: string;
-  purchase?: VendorPurchase | null; onClose: () => void;
+  vendorId: string;
+  vendorName: string;
+  purchase?: VendorPurchase | null;
+  onClose: () => void;
 }
 
 function PurchaseForm({ vendorId, vendorName, purchase, onClose }: PurchaseFormProps) {
   const { toast } = useToast();
-  const [status, setStatus] = useState<"ordered" | "received" | "partial">(purchase?.status ?? "ordered");
-  const [purchaseDate, setPurchaseDate] = useState(purchase?.purchaseDate ?? new Date().toISOString().split("T")[0]);
   const [receivedDate, setReceivedDate] = useState(purchase?.receivedDate ?? "");
   const [notes, setNotes] = useState(purchase?.notes ?? "");
-  const emptyPPFItem = (): PurchaseItem => ({ itemType: "PPF", categoryName: "", name: "", rollName: "", ppfPricing: [], quantity: 1, unit: "sqft", unitPrice: 0 } as any);
 
-  const [items, setItems] = useState<PurchaseItem[]>(
+  const emptyItem = (): any => ({
+    itemType: "PPF", categoryName: "", name: "", rollName: "", ppfPricing: [], hsnCode: "", quantity: 1, unit: "sqft", unitPrice: 0,
+  });
+
+  const [items, setItems] = useState<any[]>(
     purchase?.items?.length
-      ? purchase.items.map(i => ({ itemType: "PPF" as const, categoryName: "", rollName: "", ppfPricing: [], ...i }))
-      : [emptyPPFItem()]
+      ? purchase.items.map((i: any) => ({ itemType: "PPF", categoryName: "", rollName: "", ppfPricing: [], hsnCode: "", ...i }))
+      : [emptyItem()]
   );
 
   const { data: ppfMasters = [] } = useQuery<PPFMaster[]>({ queryKey: ["/api/masters/ppf"] });
@@ -506,14 +473,13 @@ function PurchaseForm({ vendorId, vendorName, purchase, onClose }: PurchaseFormP
   const { data: accessories = [] } = useQuery<AccessoryMaster[]>({ queryKey: ["/api/masters/accessories"] });
   const { data: vehicleTypes = [] } = useQuery<VehicleType[]>({ queryKey: ["/api/masters/vehicle-types"] });
 
-  const addItem = () => setItems(prev => [...prev, emptyPPFItem()]);
+  const addItem = () => setItems(prev => [...prev, emptyItem()]);
   const removeItem = (idx: number) => setItems(prev => prev.filter((_, i) => i !== idx));
-  const updateItem = (idx: number, updated: PurchaseItem) =>
-    setItems(prev => prev.map((item, i) => i === idx ? updated : item));
+  const updateItem = (idx: number, updated: any) => setItems(prev => prev.map((item, i) => i === idx ? updated : item));
 
   const total = items.reduce((sum, i) => sum + (Number(i.quantity) || 0) * (Number(i.unitPrice) || 0), 0);
 
-  const invalidateMastersCaches = () => {
+  const invalidateMasters = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/masters/ppf"] });
     queryClient.invalidateQueries({ queryKey: ["/api/masters/accessories"] });
     queryClient.invalidateQueries({ queryKey: ["/api/masters/accessory-categories"] });
@@ -523,16 +489,18 @@ function PurchaseForm({ vendorId, vendorName, purchase, onClose }: PurchaseFormP
     mutationFn: (data: any) => apiRequest("POST", "/api/vendor-purchases", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vendor-purchases"] });
-      invalidateMastersCaches();
-      toast({ title: "Purchase recorded" }); onClose();
+      invalidateMasters();
+      toast({ title: "Purchase recorded" });
+      onClose();
     },
   });
   const updateMutation = useMutation({
     mutationFn: (data: any) => apiRequest("PATCH", `/api/vendor-purchases/${purchase!.id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vendor-purchases"] });
-      invalidateMastersCaches();
-      toast({ title: "Purchase updated" }); onClose();
+      invalidateMasters();
+      toast({ title: "Purchase updated" });
+      onClose();
     },
   });
 
@@ -540,70 +508,92 @@ function PurchaseForm({ vendorId, vendorName, purchase, onClose }: PurchaseFormP
     e.preventDefault();
     const validItems = items.filter(i => i.name.trim());
     if (!validItems.length) {
-      toast({ title: "Error", description: "Add at least one item", variant: "destructive" }); return;
+      toast({ title: "Error", description: "Add at least one item", variant: "destructive" });
+      return;
     }
-    const payload = { vendorId, vendorName, items: validItems, status, purchaseDate, receivedDate, notes };
+    const payload = {
+      vendorId,
+      vendorName,
+      items: validItems,
+      status: "received",
+      purchaseDate: new Date().toISOString().split("T")[0],
+      receivedDate,
+      notes,
+      totalAmount: total,
+    };
     if (purchase) updateMutation.mutate(payload); else createMutation.mutate(payload);
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <Label>Purchase Date *</Label>
-          <Input data-testid="input-purchase-date" type="date" value={purchaseDate}
-            onChange={e => setPurchaseDate(e.target.value)} required />
-        </div>
-        <div className="space-y-1">
-          <Label>Status</Label>
-          <Select value={status} onValueChange={v => setStatus(v as any)}>
-            <SelectTrigger data-testid="select-purchase-status"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ordered">Ordered</SelectItem>
-              <SelectItem value="received">Received</SelectItem>
-              <SelectItem value="partial">Partial</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {(status === "received" || status === "partial") && (
-          <div className="space-y-1">
-            <Label>Received Date</Label>
-            <Input data-testid="input-received-date" type="date" value={receivedDate}
-              onChange={e => setReceivedDate(e.target.value)} />
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Items list */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <Label>Items</Label>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Items</h3>
+            <p className="text-xs text-muted-foreground">Each PPF line = one roll. Add multiple rows for multiple rolls/items.</p>
+          </div>
           <Button data-testid="button-add-item" type="button" size="sm" variant="outline" onClick={addItem}>
             <Plus className="h-3 w-3 mr-1" /> Add Item
           </Button>
         </div>
-        <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1">
+
+        {/* Column hint */}
+        <div className="hidden sm:grid grid-cols-[1fr_72px_80px_100px_auto] gap-2 px-3 text-xs text-muted-foreground font-medium">
+          <span>HSN Code</span>
+          <span className="text-center">Qty</span>
+          <span>Unit</span>
+          <span>Rate (₹)</span>
+          <span className="text-right min-w-[60px]">Amount</span>
+        </div>
+
+        <div className="space-y-2">
           {items.map((item, idx) => (
-            <ItemRow key={idx} idx={idx} item={item}
-              ppfMasters={ppfMasters} accessories={accessories} categories={categories}
+            <ItemRow
+              key={idx}
+              idx={idx}
+              item={item}
+              ppfMasters={ppfMasters}
+              accessories={accessories}
+              categories={categories}
               vehicleTypes={vehicleTypes}
-              onChange={updateItem} onRemove={removeItem} />
+              onChange={updateItem}
+              onRemove={removeItem}
+            />
           ))}
         </div>
-        <div className="flex justify-between items-center pt-2 border-t border-border/50">
+
+        <div className="flex justify-between items-center pt-2 border-t border-border/60">
           <span className="text-sm text-muted-foreground">{items.filter(i => i.name).length} item(s)</span>
-          <span className="text-sm font-bold text-primary">Total: {formatCurrency(total)}</span>
+          <span className="text-base font-bold text-primary">Total: {formatCurrency(total)}</span>
         </div>
       </div>
 
-      <div className="space-y-1">
-        <Label>Notes</Label>
-        <Textarea data-testid="input-purchase-notes" value={notes}
-          onChange={e => setNotes(e.target.value)} placeholder="e.g. Delivery in 3 days, partial shipment..." rows={2} />
+      {/* Received date + Notes */}
+      <div className="grid grid-cols-2 gap-4 pt-1 border-t border-border/40">
+        <div className="space-y-1">
+          <Label>Received Date</Label>
+          <Input
+            data-testid="input-received-date"
+            type="date"
+            value={receivedDate}
+            onChange={e => setReceivedDate(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label>Notes</Label>
+          <Input
+            data-testid="input-purchase-notes"
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="e.g. Delivery in 3 days..."
+          />
+        </div>
       </div>
 
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
         <Button data-testid="button-save-purchase" type="submit" disabled={isPending}>
           {isPending ? "Saving..." : purchase ? "Update Purchase" : "Record Purchase"}
@@ -613,16 +603,81 @@ function PurchaseForm({ vendorId, vendorName, purchase, onClose }: PurchaseFormP
   );
 }
 
-// ─── Vendor Card ───────────────────────────────────────────────────────────
+// ─── Full-Screen Purchase Panel ───────────────────────────────────────────────
+interface PurchasePanelProps {
+  vendor: Vendor;
+  purchase?: VendorPurchase;
+  onBack: () => void;
+}
+
+function PurchasePanel({ vendor, purchase, onBack }: PurchasePanelProps) {
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Sticky header bar */}
+      <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-background/95 backdrop-blur-sm flex-shrink-0">
+        <button
+          type="button"
+          data-testid="button-back-to-vendors"
+          onClick={onBack}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
+        <div className="h-4 w-px bg-border" />
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center">
+            <Building2 className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <span className="font-semibold text-foreground text-sm">{vendor.name}</span>
+            {vendor.category && <span className="text-xs text-muted-foreground ml-2">{vendor.category}</span>}
+          </div>
+        </div>
+        {(vendor.phone || vendor.contactPerson) && (
+          <>
+            <div className="h-4 w-px bg-border hidden sm:block" />
+            <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground">
+              {vendor.contactPerson && <span>{vendor.contactPerson}</span>}
+              {vendor.phone && <span className="font-mono">{vendor.phone}</span>}
+            </div>
+          </>
+        )}
+        <div className="ml-auto">
+          <span className="text-sm font-medium text-muted-foreground">
+            {purchase ? "Edit Purchase" : "New Purchase"}
+          </span>
+        </div>
+      </div>
+
+      {/* Scrollable form area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto p-6">
+          <PurchaseForm
+            vendorId={vendor.id!}
+            vendorName={vendor.name}
+            purchase={purchase}
+            onClose={onBack}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Vendor Card ──────────────────────────────────────────────────────────────
 interface VendorCardProps {
-  vendor: Vendor; purchases: VendorPurchase[];
-  onEdit: () => void; onDelete: () => void; onAddPurchase: () => void;
+  vendor: Vendor;
+  purchases: VendorPurchase[];
+  onEdit: () => void;
+  onDelete: () => void;
+  onAddPurchase: () => void;
+  onEditPurchase: (p: VendorPurchase) => void;
   listView?: boolean;
 }
 
-function VendorCard({ vendor, purchases, onEdit, onDelete, onAddPurchase, listView }: VendorCardProps) {
+function VendorCard({ vendor, purchases, onEdit, onDelete, onAddPurchase, onEditPurchase, listView }: VendorCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const [editingPurchase, setEditingPurchase] = useState<VendorPurchase | null>(null);
   const { toast } = useToast();
   const vendorPurchases = purchases.filter(p => p.vendorId === vendor.id);
   const totalSpend = vendorPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
@@ -637,273 +692,193 @@ function VendorCard({ vendor, purchases, onEdit, onDelete, onAddPurchase, listVi
 
   if (listView) {
     return (
-      <>
-        <div className="flex items-center gap-4 px-4 py-3 border-b border-border/40 hover:bg-muted/20 transition-colors">
-          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Building2 className="h-4 w-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p data-testid={`text-vendor-name-${vendor.id}`} className="font-semibold text-foreground text-sm">{vendor.name}</p>
-            {vendor.category && <span className="text-xs text-muted-foreground">{vendor.category}</span>}
-          </div>
-          <div className="hidden md:flex items-center gap-1 text-xs text-muted-foreground min-w-[120px]">
-            {vendor.contactPerson && <><Building2 className="h-3 w-3" /><span>{vendor.contactPerson}</span></>}
-          </div>
-          <div className="hidden md:flex items-center gap-1 text-xs text-muted-foreground min-w-[110px]">
-            {vendor.phone && <><Phone className="h-3 w-3" /><span>{vendor.phone}</span></>}
-          </div>
-          <div className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground min-w-[130px]">
-            {vendor.email && <><Mail className="h-3 w-3" /><span className="truncate max-w-[120px]">{vendor.email}</span></>}
-          </div>
-          <div className="text-right min-w-[100px]">
-            <p data-testid={`text-vendor-spend-${vendor.id}`} className="text-sm font-semibold text-primary">{formatCurrency(totalSpend)}</p>
-            <p className="text-xs text-muted-foreground">{vendorPurchases.length} purchase{vendorPurchases.length !== 1 ? "s" : ""}</p>
-          </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <Button data-testid={`button-add-purchase-${vendor.id}`} size="sm" variant="outline" onClick={onAddPurchase} className="h-7 text-xs">
-              <Plus className="h-3 w-3 mr-1" /> Purchase
-            </Button>
-            <Button data-testid={`button-edit-vendor-${vendor.id}`} size="icon" variant="ghost" className="h-7 w-7" onClick={onEdit}>
-              <Edit2 className="h-3.5 w-3.5" />
-            </Button>
-            <Button data-testid={`button-delete-vendor-${vendor.id}`} size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={onDelete}>
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+      <div className="flex items-center gap-4 px-4 py-3 border-b border-border/40 hover:bg-muted/20 transition-colors">
+        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Building2 className="h-4 w-4 text-primary" />
         </div>
-        {editingPurchase && (
-          <Dialog open onOpenChange={() => setEditingPurchase(null)}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Edit Purchase — {vendor.name}</DialogTitle></DialogHeader>
-              <PurchaseForm vendorId={vendor.id!} vendorName={vendor.name}
-                purchase={editingPurchase} onClose={() => setEditingPurchase(null)} />
-            </DialogContent>
-          </Dialog>
-        )}
-      </>
+        <div className="flex-1 min-w-0">
+          <p data-testid={`text-vendor-name-${vendor.id}`} className="font-semibold text-foreground text-sm">{vendor.name}</p>
+          {vendor.category && <span className="text-xs text-muted-foreground">{vendor.category}</span>}
+        </div>
+        <div className="hidden md:flex items-center gap-1 text-xs text-muted-foreground min-w-[120px]">
+          {vendor.contactPerson && <><Building2 className="h-3 w-3" /><span>{vendor.contactPerson}</span></>}
+        </div>
+        <div className="hidden md:flex items-center gap-1 text-xs text-muted-foreground min-w-[110px]">
+          {vendor.phone && <><Phone className="h-3 w-3" /><span>{vendor.phone}</span></>}
+        </div>
+        <div className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground min-w-[130px]">
+          {vendor.email && <><Mail className="h-3 w-3" /><span className="truncate max-w-[120px]">{vendor.email}</span></>}
+        </div>
+        <div className="text-right min-w-[100px]">
+          <p data-testid={`text-vendor-spend-${vendor.id}`} className="text-sm font-semibold text-primary">{formatCurrency(totalSpend)}</p>
+          <p className="text-xs text-muted-foreground">{vendorPurchases.length} purchase{vendorPurchases.length !== 1 ? "s" : ""}</p>
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <Button data-testid={`button-add-purchase-${vendor.id}`} size="sm" variant="outline" onClick={onAddPurchase} className="h-7 text-xs">
+            <Plus className="h-3 w-3 mr-1" /> Purchase
+          </Button>
+          <Button data-testid={`button-edit-vendor-${vendor.id}`} size="icon" variant="ghost" className="h-7 w-7" onClick={onEdit}>
+            <Edit2 className="h-3.5 w-3.5" />
+          </Button>
+          <Button data-testid={`button-delete-vendor-${vendor.id}`} size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={onDelete}>
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <>
-      <Card className="overflow-hidden border border-border/60">
-        <CardHeader className="pb-3 pt-4 px-4">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Building2 className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h3 data-testid={`text-vendor-name-${vendor.id}`} className="font-semibold text-foreground leading-tight">{vendor.name}</h3>
-                {vendor.category && <span className="text-xs text-muted-foreground">{vendor.category}</span>}
-              </div>
-            </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <Button data-testid={`button-add-purchase-${vendor.id}`} size="sm" variant="outline" onClick={onAddPurchase} className="h-8 text-xs">
-                <Plus className="h-3 w-3 mr-1" /> Purchase
-              </Button>
-              <Button data-testid={`button-edit-vendor-${vendor.id}`} size="icon" variant="ghost" className="h-8 w-8" onClick={onEdit}>
-                <Edit2 className="h-3.5 w-3.5" />
-              </Button>
-              <Button data-testid={`button-delete-vendor-${vendor.id}`} size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={onDelete}>
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="px-4 pb-4 space-y-3">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-            {vendor.contactPerson && (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Building2 className="h-3.5 w-3.5" />
-                <span data-testid={`text-vendor-contact-${vendor.id}`}>{vendor.contactPerson}</span>
-              </div>
-            )}
-            {vendor.phone && (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Phone className="h-3.5 w-3.5" />
-                <span data-testid={`text-vendor-phone-${vendor.id}`}>{vendor.phone}</span>
-              </div>
-            )}
-            {vendor.email && (
-              <div className="flex items-center gap-1.5 text-muted-foreground col-span-2">
-                <Mail className="h-3.5 w-3.5" />
-                <span data-testid={`text-vendor-email-${vendor.id}`}>{vendor.email}</span>
-              </div>
-            )}
-            {vendor.address && (
-              <div className="flex items-center gap-1.5 text-muted-foreground col-span-2">
-                <MapPin className="h-3.5 w-3.5" />
-                <span data-testid={`text-vendor-address-${vendor.id}`} className="line-clamp-1">{vendor.address}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between pt-1 border-t border-border/50">
-            <div className="flex items-center gap-3 text-sm">
-              <span className="text-muted-foreground">{vendorPurchases.length} purchase{vendorPurchases.length !== 1 ? "s" : ""}</span>
-              <span data-testid={`text-vendor-spend-${vendor.id}`} className="font-semibold text-primary">{formatCurrency(totalSpend)}</span>
-            </div>
-            {vendorPurchases.length > 0 && (
-              <button data-testid={`button-toggle-purchases-${vendor.id}`} onClick={() => setExpanded(e => !e)}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                {expanded ? "Hide" : "View"} purchases
-              </button>
-            )}
-          </div>
-
-          {expanded && vendorPurchases.length > 0 && (
-            <div className="space-y-2 pt-1">
-              {vendorPurchases.map(p => (
-                <div key={p.id} data-testid={`card-purchase-${p.id}`}
-                  className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-sm font-medium">{formatDate(p.purchaseDate)}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[p.status]}`}>
-                        {STATUS_LABELS[p.status]}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm font-semibold text-primary">{formatCurrency(p.totalAmount)}</span>
-                      <Button data-testid={`button-edit-purchase-${p.id}`} size="icon" variant="ghost" className="h-7 w-7"
-                        onClick={() => setEditingPurchase(p)}><Edit2 className="h-3 w-3" /></Button>
-                      <Button data-testid={`button-delete-purchase-${p.id}`} size="icon" variant="ghost"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={() => deletePurchaseMutation.mutate(p.id!)}><Trash2 className="h-3 w-3" /></Button>
-                    </div>
-                  </div>
-                  {p.receivedDate && <p className="text-xs text-muted-foreground">Received: {formatDate(p.receivedDate)}</p>}
-                  <div className="space-y-0.5">
-                    {p.items.map((item, i) => (
-                      <div key={i} className="flex justify-between text-xs text-muted-foreground">
-                        <span>
-                          {item.itemType && <span className="text-primary font-medium">[{item.itemType}]</span>}{" "}
-                          {item.categoryName && item.categoryName !== "PPF" && <span className="text-muted-foreground">{item.categoryName} › </span>}
-                          {item.name} × {item.quantity} {item.unit}
-                        </span>
-                        <span>{formatCurrency(item.quantity * item.unitPrice)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {p.notes && <p className="text-xs text-muted-foreground italic">{p.notes}</p>}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {editingPurchase && (
-        <Dialog open onOpenChange={() => setEditingPurchase(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Purchase — {vendor.name}</DialogTitle>
-            </DialogHeader>
-            <PurchaseForm vendorId={vendor.id!} vendorName={vendor.name}
-              purchase={editingPurchase} onClose={() => setEditingPurchase(null)} />
-          </DialogContent>
-        </Dialog>
-      )}
-    </>
-  );
-}
-
-// ─── Purchase Card (for grid view in All Purchases) ─────────────────────────
-function PurchaseGridCard({ p, onEdit, onDelete }: { p: VendorPurchase; onEdit: () => void; onDelete: () => void }) {
-  return (
-    <Card data-testid={`card-purchase-grid-${p.id}`} className="border border-border/60">
+    <Card className="overflow-hidden border border-border/60">
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="font-semibold text-sm text-foreground">{p.vendorName || "—"}</p>
-            <div className="flex items-center gap-1.5 mt-1">
-              <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">{formatDate(p.purchaseDate)}</span>
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Building2 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 data-testid={`text-vendor-name-${vendor.id}`} className="font-semibold text-foreground leading-tight">{vendor.name}</h3>
+              {vendor.category && <span className="text-xs text-muted-foreground">{vendor.category}</span>}
             </div>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[p.status]}`}>
-              {STATUS_LABELS[p.status]}
-            </span>
-            <Button data-testid={`button-edit-purchase-tab-${p.id}`} size="icon" variant="ghost" className="h-7 w-7" onClick={onEdit}>
+            <Button data-testid={`button-add-purchase-${vendor.id}`} size="sm" variant="outline" onClick={onAddPurchase} className="h-8 text-xs">
+              <Plus className="h-3 w-3 mr-1" /> Purchase
+            </Button>
+            <Button data-testid={`button-edit-vendor-${vendor.id}`} size="icon" variant="ghost" className="h-8 w-8" onClick={onEdit}>
               <Edit2 className="h-3.5 w-3.5" />
             </Button>
-            <Button data-testid={`button-delete-purchase-tab-${p.id}`} size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={onDelete}>
+            <Button data-testid={`button-delete-vendor-${vendor.id}`} size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={onDelete}>
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
-        <div className="space-y-1 border-t border-border/40 pt-2">
-          {p.items.map((item, i) => (
-            <div key={i} className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1 text-muted-foreground">
-                {item.itemType && (
-                  <span className="text-primary font-medium text-[10px] bg-primary/10 px-1 rounded">{item.itemType}</span>
-                )}
-                {item.categoryName && item.categoryName !== "PPF" && <span>{item.categoryName} › </span>}
-                <span>{item.name}</span>
-                <span className="text-muted-foreground/70">×{item.quantity} {item.unit}</span>
-              </span>
-              <span className="font-medium">{formatCurrency(item.quantity * item.unitPrice)}</span>
+
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+          {vendor.contactPerson && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Building2 className="h-3.5 w-3.5" />
+              <span data-testid={`text-vendor-contact-${vendor.id}`}>{vendor.contactPerson}</span>
             </div>
-          ))}
+          )}
+          {vendor.phone && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Phone className="h-3.5 w-3.5" />
+              <span data-testid={`text-vendor-phone-${vendor.id}`}>{vendor.phone}</span>
+            </div>
+          )}
+          {vendor.email && (
+            <div className="flex items-center gap-1.5 text-muted-foreground col-span-2">
+              <Mail className="h-3.5 w-3.5" />
+              <span data-testid={`text-vendor-email-${vendor.id}`}>{vendor.email}</span>
+            </div>
+          )}
+          {vendor.address && (
+            <div className="flex items-center gap-1.5 text-muted-foreground col-span-2">
+              <MapPin className="h-3.5 w-3.5" />
+              <span data-testid={`text-vendor-address-${vendor.id}`} className="line-clamp-1">{vendor.address}</span>
+            </div>
+          )}
         </div>
-        <div className="flex items-center justify-between pt-1 border-t border-border/40">
-          <span className="text-xs text-muted-foreground">
-            {p.receivedDate ? `Received: ${formatDate(p.receivedDate)}` : "—"}
-          </span>
-          <span className="text-sm font-bold text-primary">{formatCurrency(p.totalAmount)}</span>
+
+        <div className="flex items-center justify-between pt-1 border-t border-border/50">
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-muted-foreground">{vendorPurchases.length} purchase{vendorPurchases.length !== 1 ? "s" : ""}</span>
+            <span data-testid={`text-vendor-spend-${vendor.id}`} className="font-semibold text-primary">{formatCurrency(totalSpend)}</span>
+          </div>
+          {vendorPurchases.length > 0 && (
+            <button
+              data-testid={`button-toggle-purchases-${vendor.id}`}
+              onClick={() => setExpanded(e => !e)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {expanded ? "Hide" : "View"} purchases
+            </button>
+          )}
         </div>
+
+        {expanded && vendorPurchases.length > 0 && (
+          <div className="space-y-2 pt-1">
+            {vendorPurchases.map(p => (
+              <div key={p.id} data-testid={`card-purchase-${p.id}`}
+                className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-sm font-medium">
+                      {p.receivedDate ? `Received: ${formatDate(p.receivedDate)}` : "Not yet received"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-semibold text-primary">{formatCurrency(p.totalAmount)}</span>
+                    <Button data-testid={`button-edit-purchase-${p.id}`} size="icon" variant="ghost" className="h-7 w-7"
+                      onClick={() => onEditPurchase(p)}>
+                      <Edit2 className="h-3 w-3" />
+                    </Button>
+                    <Button data-testid={`button-delete-purchase-${p.id}`} size="icon" variant="ghost"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={() => deletePurchaseMutation.mutate(p.id!)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  {p.items.map((item: any, i: number) => (
+                    <div key={i} className="flex justify-between text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1 flex-wrap">
+                        {item.itemType && <span className="text-primary font-medium">[{item.itemType}]</span>}
+                        {item.categoryName && item.categoryName !== "PPF" && <span>{item.categoryName} › </span>}
+                        <span>{item.name}</span>
+                        <span>× {item.quantity} {item.unit}</span>
+                        {item.hsnCode && <span className="font-mono text-muted-foreground/60">HSN:{item.hsnCode}</span>}
+                      </span>
+                      <span className="flex-shrink-0 font-medium">{formatCurrency(item.quantity * item.unitPrice)}</span>
+                    </div>
+                  ))}
+                </div>
+                {p.notes && <p className="text-xs text-muted-foreground italic">{p.notes}</p>}
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-// ─── Layout Toggle ──────────────────────────────────────────────────────────
+// ─── Layout Toggle ────────────────────────────────────────────────────────────
 function LayoutToggle({ value, onChange }: { value: "grid" | "list"; onChange: (v: "grid" | "list") => void }) {
   return (
     <div className="flex items-center border border-border/60 rounded-lg overflow-hidden">
-      <button
-        data-testid="button-layout-grid"
-        onClick={() => onChange("grid")}
-        className={`p-2 transition-colors ${value === "grid" ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"}`}
-      >
+      <button data-testid="button-layout-grid" onClick={() => onChange("grid")}
+        className={`p-2 transition-colors ${value === "grid" ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"}`}>
         <LayoutGrid className="h-4 w-4" />
       </button>
-      <button
-        data-testid="button-layout-list"
-        onClick={() => onChange("list")}
-        className={`p-2 transition-colors ${value === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"}`}
-      >
+      <button data-testid="button-layout-list" onClick={() => onChange("list")}
+        className={`p-2 transition-colors ${value === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"}`}>
         <List className="h-4 w-4" />
       </button>
     </div>
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function VendorManagementPage() {
   const { toast } = useToast();
   const [isAddVendorOpen, setIsAddVendorOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
-  const [addingPurchaseFor, setAddingPurchaseFor] = useState<Vendor | null>(null);
+  const [purchaseView, setPurchaseView] = useState<{ vendor: Vendor; purchase?: VendorPurchase } | null>(null);
 
-  // Vendor tab controls
   const [vendorSearch, setVendorSearch] = useState("");
   const [vendorSort, setVendorSort] = useState("name-asc");
   const [vendorFilter, setVendorFilter] = useState("all");
   const [vendorLayout, setVendorLayout] = useState<"grid" | "list">("grid");
 
-  // Purchases tab controls
   const [purchaseSearch, setPurchaseSearch] = useState("");
   const [purchaseSort, setPurchaseSort] = useState("date-desc");
-  const [purchaseStatusFilter, setPurchaseStatusFilter] = useState("all");
   const [purchaseVendorFilter, setPurchaseVendorFilter] = useState("all");
   const [purchaseLayout, setPurchaseLayout] = useState<"grid" | "list">("list");
-  const [editingPurchaseInTab, setEditingPurchaseInTab] = useState<VendorPurchase | null>(null);
 
   const { data: vendors = [], isLoading: vendorsLoading } = useQuery<Vendor[]>({ queryKey: ["/api/vendors"] });
   const { data: purchases = [], isLoading: purchasesLoading } = useQuery<VendorPurchase[]>({ queryKey: ["/api/vendor-purchases"] });
@@ -916,8 +891,7 @@ export default function VendorManagementPage() {
       toast({ title: "Vendor deleted" });
     },
   });
-
-  const deletePurchaseInTabMutation = useMutation({
+  const deletePurchaseMutation = useMutation({
     mutationFn: (id: string) => apiRequest("DELETE", `/api/vendor-purchases/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vendor-purchases"] });
@@ -926,9 +900,12 @@ export default function VendorManagementPage() {
   });
 
   const totalSpend = purchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
-  const pendingCount = purchases.filter(p => p.status === "ordered" || p.status === "partial").length;
+  const thisMonth = purchases.filter(p => {
+    const d = new Date(p.purchaseDate || p.createdAt || "");
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
 
-  // ── Vendor filtering / sorting ──────────────────────────────────────────
   const filteredVendors = vendors
     .filter(v => {
       const matchesSearch =
@@ -953,15 +930,13 @@ export default function VendorManagementPage() {
       }
     });
 
-  // ── Purchase filtering / sorting ─────────────────────────────────────────
   const filteredPurchases = purchases
     .filter(p => {
       const matchesSearch =
         (p.vendorName || "").toLowerCase().includes(purchaseSearch.toLowerCase()) ||
-        p.items.some(i => i.name.toLowerCase().includes(purchaseSearch.toLowerCase()));
-      const matchesStatus = purchaseStatusFilter === "all" || p.status === purchaseStatusFilter;
+        p.items.some((i: any) => i.name.toLowerCase().includes(purchaseSearch.toLowerCase()));
       const matchesVendor = purchaseVendorFilter === "all" || p.vendorId === purchaseVendorFilter;
-      return matchesSearch && matchesStatus && matchesVendor;
+      return matchesSearch && matchesVendor;
     })
     .sort((a, b) => {
       switch (purchaseSort) {
@@ -975,8 +950,22 @@ export default function VendorManagementPage() {
     });
 
   const filteredTotal = filteredPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
-
   const uniqueVendors = vendors.filter((v, i, arr) => arr.findIndex(x => x.id === v.id) === i);
+
+  // ── Full-screen Purchase Panel ───────────────────────────────────────────
+  if (purchaseView) {
+    return (
+      <Layout>
+        <div className="h-full flex flex-col overflow-hidden">
+          <PurchasePanel
+            vendor={purchaseView.vendor}
+            purchase={purchaseView.purchase}
+            onBack={() => setPurchaseView(null)}
+          />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -984,13 +973,14 @@ export default function VendorManagementPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-display font-bold tracking-tight text-foreground">Vendor Management</h1>
-            <p className="text-muted-foreground mt-1">Track vendors, purchases, and delivery status</p>
+            <p className="text-muted-foreground mt-1">Track vendors, purchases, and inventory</p>
           </div>
           <Button data-testid="button-add-vendor" onClick={() => setIsAddVendorOpen(true)}>
             <Plus className="h-4 w-4 mr-2" /> Add Vendor
           </Button>
         </div>
 
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           <Card className="border-border/60">
             <CardContent className="p-4 flex items-center gap-3">
@@ -1016,12 +1006,12 @@ export default function VendorManagementPage() {
           </Card>
           <Card className="border-border/60">
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-yellow-100 flex items-center justify-center">
-                <Package className="h-5 w-5 text-yellow-600" />
+              <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                <Package className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Pending Deliveries</p>
-                <p data-testid="stat-pending-deliveries" className="text-2xl font-bold text-yellow-600">{pendingCount}</p>
+                <p className="text-sm text-muted-foreground">This Month</p>
+                <p data-testid="stat-this-month" className="text-2xl font-bold text-blue-600">{thisMonth}</p>
               </div>
             </CardContent>
           </Card>
@@ -1041,7 +1031,6 @@ export default function VendorManagementPage() {
                 <Input data-testid="input-search-vendor" className="pl-9" placeholder="Search vendors..."
                   value={vendorSearch} onChange={e => setVendorSearch(e.target.value)} />
               </div>
-
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <SlidersHorizontal className="h-4 w-4" />
               </div>
@@ -1054,7 +1043,6 @@ export default function VendorManagementPage() {
                   {VENDOR_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
-
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <ArrowUpDown className="h-4 w-4" />
               </div>
@@ -1070,15 +1058,14 @@ export default function VendorManagementPage() {
                   <SelectItem value="purchases-desc">Most Purchases</SelectItem>
                 </SelectContent>
               </Select>
-
               <div className="ml-auto">
                 <LayoutToggle value={vendorLayout} onChange={setVendorLayout} />
               </div>
             </div>
 
-            {vendorSearch || vendorFilter !== "all" ? (
+            {(vendorSearch || vendorFilter !== "all") && (
               <p className="text-xs text-muted-foreground">{filteredVendors.length} of {vendors.length} vendor{vendors.length !== 1 ? "s" : ""}</p>
-            ) : null}
+            )}
 
             {vendorsLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -1096,30 +1083,28 @@ export default function VendorManagementPage() {
                   <VendorCard key={vendor.id} vendor={vendor} purchases={purchases}
                     onEdit={() => setEditingVendor(vendor)}
                     onDelete={() => deleteVendorMutation.mutate(vendor.id!)}
-                    onAddPurchase={() => setAddingPurchaseFor(vendor)} />
+                    onAddPurchase={() => setPurchaseView({ vendor })}
+                    onEditPurchase={(p) => setPurchaseView({ vendor, purchase: p })} />
                 ))}
               </div>
             ) : (
               <div className="rounded-xl border border-border/60 overflow-hidden">
                 <div className="hidden md:grid grid-cols-[2fr_1.5fr_1.5fr_1.5fr_auto] gap-4 px-4 py-2 bg-muted/50 border-b border-border/60 text-xs font-medium text-muted-foreground">
-                  <span>Vendor</span>
-                  <span>Contact</span>
-                  <span>Phone</span>
-                  <span className="hidden lg:block">Email</span>
-                  <span className="text-right">Spend</span>
+                  <span>Vendor</span><span>Contact</span><span>Phone</span><span className="hidden lg:block">Email</span><span className="text-right">Spend</span>
                 </div>
                 {filteredVendors.map(vendor => (
                   <VendorCard key={vendor.id} vendor={vendor} purchases={purchases}
                     onEdit={() => setEditingVendor(vendor)}
                     onDelete={() => deleteVendorMutation.mutate(vendor.id!)}
-                    onAddPurchase={() => setAddingPurchaseFor(vendor)}
+                    onAddPurchase={() => setPurchaseView({ vendor })}
+                    onEditPurchase={(p) => setPurchaseView({ vendor, purchase: p })}
                     listView />
                 ))}
               </div>
             )}
           </TabsContent>
 
-          {/* ── All Purchases Tab ──────────────────────────────────────── */}
+          {/* ── All Purchases Tab ────────────────────────────────────────── */}
           <TabsContent value="purchases" className="mt-4 space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative flex-1 min-w-[180px] max-w-xs">
@@ -1127,34 +1112,15 @@ export default function VendorManagementPage() {
                 <Input data-testid="input-search-purchase" className="pl-9" placeholder="Search purchases..."
                   value={purchaseSearch} onChange={e => setPurchaseSearch(e.target.value)} />
               </div>
-
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <SlidersHorizontal className="h-4 w-4" />
-              </div>
-              <Select value={purchaseStatusFilter} onValueChange={setPurchaseStatusFilter}>
-                <SelectTrigger data-testid="select-purchase-status-filter" className="h-9 w-36 text-sm">
-                  <SelectValue placeholder="Filter status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="ordered">Ordered</SelectItem>
-                  <SelectItem value="received">Received</SelectItem>
-                  <SelectItem value="partial">Partial</SelectItem>
-                </SelectContent>
-              </Select>
-
               <Select value={purchaseVendorFilter} onValueChange={setPurchaseVendorFilter}>
                 <SelectTrigger data-testid="select-purchase-vendor-filter" className="h-9 w-44 text-sm">
                   <SelectValue placeholder="Filter by vendor" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Vendors</SelectItem>
-                  {uniqueVendors.map(v => (
-                    <SelectItem key={v.id} value={v.id!}>{v.name}</SelectItem>
-                  ))}
+                  {uniqueVendors.map(v => <SelectItem key={v.id} value={v.id!}>{v.name}</SelectItem>)}
                 </SelectContent>
               </Select>
-
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <ArrowUpDown className="h-4 w-4" />
               </div>
@@ -1170,104 +1136,137 @@ export default function VendorManagementPage() {
                   <SelectItem value="vendor-asc">Vendor A → Z</SelectItem>
                 </SelectContent>
               </Select>
-
               <div className="ml-auto">
                 <LayoutToggle value={purchaseLayout} onChange={setPurchaseLayout} />
               </div>
             </div>
 
-            {(purchaseSearch || purchaseStatusFilter !== "all" || purchaseVendorFilter !== "all") ? (
+            {(purchaseSearch || purchaseVendorFilter !== "all") && (
               <p className="text-xs text-muted-foreground">{filteredPurchases.length} of {purchases.length} purchase{purchases.length !== 1 ? "s" : ""}</p>
-            ) : null}
+            )}
 
             {purchasesLoading ? (
               <div className="space-y-2">{[1, 2, 3].map(i => <div key={i} className="h-16 rounded-lg bg-muted animate-pulse" />)}</div>
             ) : filteredPurchases.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
                 <ShoppingCart className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">{purchaseSearch || purchaseStatusFilter !== "all" || purchaseVendorFilter !== "all" ? "No purchases match your filters" : "No purchases recorded yet"}</p>
-                {!purchaseSearch && purchaseStatusFilter === "all" && purchaseVendorFilter === "all" && (
+                <p className="font-medium">{purchaseSearch || purchaseVendorFilter !== "all" ? "No purchases match your filters" : "No purchases recorded yet"}</p>
+                {!purchaseSearch && purchaseVendorFilter === "all" && (
                   <p className="text-sm mt-1">Add a vendor and record purchases from their card</p>
                 )}
               </div>
             ) : purchaseLayout === "grid" ? (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {filteredPurchases.map(p => (
-                    <PurchaseGridCard key={p.id} p={p}
-                      onEdit={() => setEditingPurchaseInTab(p)}
-                      onDelete={() => deletePurchaseInTabMutation.mutate(p.id!)} />
-                  ))}
-                </div>
+              <div className="space-y-2">
+                {filteredPurchases.map(p => {
+                  const vendor = vendors.find(v => v.id === p.vendorId);
+                  return (
+                    <div key={p.id} data-testid={`card-purchase-grid-${p.id}`}
+                      className="rounded-lg border border-border/60 bg-card p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-sm">{p.vendorName || "—"}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {p.receivedDate ? `Received: ${formatDate(p.receivedDate)}` : "Not yet received"}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-primary">{formatCurrency(p.totalAmount)}</span>
+                          {vendor && (
+                            <Button data-testid={`button-edit-purchase-tab-${p.id}`} size="icon" variant="ghost" className="h-7 w-7"
+                              onClick={() => setPurchaseView({ vendor, purchase: p })}>
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          <Button data-testid={`button-delete-purchase-tab-${p.id}`} size="icon" variant="ghost"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={() => deletePurchaseMutation.mutate(p.id!)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-1 border-t border-border/40 pt-2">
+                        {p.items.map((item: any, i: number) => (
+                          <div key={i} className="flex items-center justify-between text-xs">
+                            <span className="flex items-center gap-1 text-muted-foreground">
+                              {item.itemType && <span className="text-primary font-medium text-[10px] bg-primary/10 px-1 rounded">{item.itemType}</span>}
+                              {item.categoryName && item.categoryName !== "PPF" && <span>{item.categoryName} › </span>}
+                              <span>{item.name}</span>
+                              <span className="text-muted-foreground/70">×{item.quantity} {item.unit}</span>
+                              {item.hsnCode && <span className="font-mono text-muted-foreground/50">#{item.hsnCode}</span>}
+                            </span>
+                            <span className="font-medium">{formatCurrency(item.quantity * item.unitPrice)}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {p.notes && <p className="text-xs text-muted-foreground italic">{p.notes}</p>}
+                    </div>
+                  );
+                })}
                 <div className="flex justify-between items-center pt-2 border-t border-border/60">
                   <span className="text-sm text-muted-foreground">{filteredPurchases.length} purchase{filteredPurchases.length !== 1 ? "s" : ""}</span>
                   <span className="text-sm font-bold text-primary">Total: {formatCurrency(filteredTotal)}</span>
                 </div>
-              </>
+              </div>
             ) : (
               <div className="rounded-xl border border-border/60 overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50 border-b border-border/60">
                     <tr>
                       <th className="text-left px-4 py-3 font-medium text-muted-foreground">Vendor</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Date</th>
                       <th className="text-left px-4 py-3 font-medium text-muted-foreground">Items</th>
                       <th className="text-left px-4 py-3 font-medium text-muted-foreground">Received</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
                       <th className="text-right px-4 py-3 font-medium text-muted-foreground">Amount</th>
                       <th className="px-4 py-3"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/40">
-                    {filteredPurchases.map(p => (
-                      <tr data-testid={`row-purchase-${p.id}`} key={p.id} className="hover:bg-muted/20 transition-colors">
-                        <td className="px-4 py-3 font-medium">{p.vendorName || "—"}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{formatDate(p.purchaseDate)}</td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          <div className="space-y-0.5">
-                            {p.items.map((item, i) => (
-                              <div key={i} className="flex items-center gap-1 text-xs">
-                                {item.itemType && (
-                                  <span className="text-primary font-medium text-[10px] bg-primary/10 px-1 rounded">
-                                    {item.itemType}
-                                  </span>
-                                )}
-                                {item.categoryName && item.categoryName !== "PPF" && <span className="text-muted-foreground">{item.categoryName} › </span>}
-                                <span>{item.name}</span>
-                                <span className="text-muted-foreground">×{item.quantity} {item.unit}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">{p.receivedDate ? formatDate(p.receivedDate) : "—"}</td>
-                        <td className="px-4 py-3">
-                          <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[p.status]}`}>
-                            {STATUS_LABELS[p.status]}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right font-semibold text-primary">{formatCurrency(p.totalAmount)}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button data-testid={`button-edit-purchase-row-${p.id}`} size="icon" variant="ghost" className="h-7 w-7"
-                              onClick={() => setEditingPurchaseInTab(p)}>
-                              <Edit2 className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button data-testid={`button-delete-purchase-row-${p.id}`} size="icon" variant="ghost"
-                              className="h-7 w-7 text-destructive hover:text-destructive"
-                              onClick={() => deletePurchaseInTabMutation.mutate(p.id!)}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredPurchases.map(p => {
+                      const vendor = vendors.find(v => v.id === p.vendorId);
+                      return (
+                        <tr data-testid={`row-purchase-${p.id}`} key={p.id} className="hover:bg-muted/20 transition-colors">
+                          <td className="px-4 py-3 font-medium">{p.vendorName || "—"}</td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            <div className="space-y-0.5">
+                              {p.items.map((item: any, i: number) => (
+                                <div key={i} className="flex items-center gap-1 text-xs">
+                                  {item.itemType && (
+                                    <span className="text-primary font-medium text-[10px] bg-primary/10 px-1 rounded">{item.itemType}</span>
+                                  )}
+                                  {item.categoryName && item.categoryName !== "PPF" && <span>{item.categoryName} › </span>}
+                                  <span>{item.name}</span>
+                                  <span>×{item.quantity} {item.unit}</span>
+                                  {item.hsnCode && <span className="font-mono text-muted-foreground/50">#{item.hsnCode}</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">{p.receivedDate ? formatDate(p.receivedDate) : "—"}</td>
+                          <td className="px-4 py-3 text-right font-semibold text-primary">{formatCurrency(p.totalAmount)}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-end gap-1">
+                              {vendor && (
+                                <Button data-testid={`button-edit-purchase-row-${p.id}`} size="icon" variant="ghost" className="h-7 w-7"
+                                  onClick={() => setPurchaseView({ vendor, purchase: p })}>
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
+                              <Button data-testid={`button-delete-purchase-row-${p.id}`} size="icon" variant="ghost"
+                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                onClick={() => deletePurchaseMutation.mutate(p.id!)}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                   <tfoot className="bg-muted/30 border-t border-border/60">
                     <tr>
-                      <td colSpan={6} className="px-4 py-3 text-sm font-medium text-muted-foreground">
+                      <td colSpan={3} className="px-4 py-3 text-sm font-medium text-muted-foreground">
                         {filteredPurchases.length} purchase{filteredPurchases.length !== 1 ? "s" : ""}
                       </td>
-                      <td className="px-4 py-3 text-right font-bold text-primary">{formatCurrency(filteredTotal)}</td>
+                      <td colSpan={2} className="px-4 py-3 text-right font-bold text-primary">{formatCurrency(filteredTotal)}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -1289,33 +1288,6 @@ export default function VendorManagementPage() {
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Edit Vendor</DialogTitle></DialogHeader>
             <VendorForm vendor={editingVendor} onClose={() => setEditingVendor(null)} />
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {addingPurchaseFor && (
-        <Dialog open onOpenChange={() => setAddingPurchaseFor(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Record Purchase — {addingPurchaseFor.name}</DialogTitle>
-            </DialogHeader>
-            <PurchaseForm vendorId={addingPurchaseFor.id!} vendorName={addingPurchaseFor.name}
-              onClose={() => setAddingPurchaseFor(null)} />
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {editingPurchaseInTab && (
-        <Dialog open onOpenChange={() => setEditingPurchaseInTab(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Purchase — {editingPurchaseInTab.vendorName}</DialogTitle>
-            </DialogHeader>
-            <PurchaseForm
-              vendorId={editingPurchaseInTab.vendorId}
-              vendorName={editingPurchaseInTab.vendorName || ""}
-              purchase={editingPurchaseInTab}
-              onClose={() => setEditingPurchaseInTab(null)} />
           </DialogContent>
         </Dialog>
       )}

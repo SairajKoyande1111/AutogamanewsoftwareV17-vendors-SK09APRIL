@@ -368,6 +368,7 @@ export const purchaseItemSchema = z.object({
   name: z.string().min(1),
   rollName: z.string().optional().default(""),
   ppfPricing: z.array(z.any()).optional().default([]),
+  hsnCode: z.string().optional().default(""),
   quantity: z.coerce.number().min(0),
   unit: z.string().default("pcs"),
   unitPrice: z.coerce.number().min(0),
