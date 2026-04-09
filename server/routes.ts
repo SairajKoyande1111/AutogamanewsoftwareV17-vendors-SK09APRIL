@@ -651,15 +651,27 @@ app.use((req, res, next) => {
           categoryNames.add(catName.toLowerCase());
         }
 
+        const purchasedQty = Number(item.quantity) || 0;
         const accKey = `${catName.toLowerCase()}::${itemName.toLowerCase()}`;
         if (!accessoryKeys.has(accKey)) {
           await storage.createAccessory({
             category: catName,
             name: itemName,
-            quantity: 0,
+            quantity: purchasedQty,
             price: Number(item.unitPrice) || 0,
           });
           accessoryKeys.add(accKey);
+        } else {
+          // Accessory already exists — add the purchased quantity to existing stock
+          const existing = existingAccessories.find(
+            a => a.category.trim().toLowerCase() === catName.toLowerCase() &&
+                 a.name.trim().toLowerCase() === itemName.toLowerCase()
+          );
+          if (existing && existing.id) {
+            await storage.updateAccessory(existing.id, {
+              quantity: (existing.quantity || 0) + purchasedQty,
+            });
+          }
         }
       }
     }
