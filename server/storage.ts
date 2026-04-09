@@ -156,9 +156,9 @@ const jobCardMongoSchema = new mongoose.Schema({
   year: { type: String },
   licensePlate: { type: String, required: true },
   vin: { type: String },
-  services: [{ id: String, name: String, price: Number, technician: String, business: { type: String, default: "Auto Gamma" } }],
-  ppfs: [{ id: String, name: String, price: Number, technician: String, rollId: String, rollUsed: Number, business: { type: String, default: "Auto Gamma" } }],
-  accessories: [{ id: String, name: String, price: Number, quantity: Number, business: { type: String, default: "Auto Gamma" } }],
+  services: [{ id: String, name: String, price: Number, technician: String, business: { type: String, default: "Auto Gamma" }, hsnCode: { type: String, default: "" } }],
+  ppfs: [{ id: String, name: String, price: Number, technician: String, rollId: String, rollUsed: Number, business: { type: String, default: "Auto Gamma" }, hsnCode: { type: String, default: "" } }],
+  accessories: [{ id: String, name: String, price: Number, quantity: Number, business: { type: String, default: "Auto Gamma" }, hsnCode: { type: String, default: "" } }],
   laborCharge: { type: Number, default: 0 },
   laborBusiness: { type: String, default: "Auto Gamma" },
   autoGammaDiscount: { type: Number, default: 0 },
@@ -203,7 +203,8 @@ const invoiceMongoSchema = new mongoose.Schema({
     warranty: String,
     vehicleType: String,
     rollUsed: Number,
-    technician: String
+    technician: String,
+    hsnCode: { type: String, default: "" }
   }],
   subtotal: { type: Number, required: true },
   discount: { type: Number, default: 0 },
