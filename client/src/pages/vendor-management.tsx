@@ -1092,7 +1092,7 @@ function VendorDetailView({ vendor, purchases, onBack, onEdit, onDelete, onAddPu
       {/* Purchase Detail Dialog */}
       {viewingPurchase && (
         <Dialog open onOpenChange={() => setViewingPurchase(null)}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[95vw] max-w-[95vw] max-h-[92vh] overflow-y-auto">
             <DialogHeader className="pb-3 border-b border-border/40">
               <DialogTitle className="text-base font-semibold">Purchase Details</DialogTitle>
             </DialogHeader>
@@ -1123,35 +1123,38 @@ function VendorDetailView({ vendor, purchases, onBack, onEdit, onDelete, onAddPu
                 <table className="w-full text-sm">
                   <thead className="bg-muted/40 border-b border-border/40">
                     <tr>
-                      <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Type</th>
-                      <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Item</th>
-                      <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Roll / Batch</th>
-                      <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">HSN</th>
-                      <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Qty</th>
-                      <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Unit Price</th>
-                      <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Cost Total</th>
-                      <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Sell Price</th>
-                      <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Sell Total</th>
+                      <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Type</th>
+                      <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Category</th>
+                      <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Item</th>
+                      <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Roll / Batch</th>
+                      <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">HSN</th>
+                      <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Qty</th>
+                      <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Unit Price</th>
+                      <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Cost Total</th>
+                      <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Sell Price</th>
+                      <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">Sell Total</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/30">
                     {viewingPurchase.items.map((item: any, i: number) => (
                       <tr key={i} className="hover:bg-muted/10 transition-colors">
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <span className="text-xs font-semibold text-foreground">{item.itemType || "—"}</span>
+                          <span className="text-sm font-semibold text-foreground">{item.itemType || "—"}</span>
                         </td>
-                        <td className="px-3 py-3">
-                          <span className="text-sm font-medium text-foreground">
-                            {item.categoryName && item.categoryName !== "PPF" ? `${item.categoryName} › ` : ""}
-                            {item.name}
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <span className="text-sm text-foreground">
+                            {item.itemType === "Accessory" && item.categoryName ? item.categoryName : "—"}
                           </span>
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <span className="text-sm font-medium text-foreground">{item.name}</span>
                         </td>
                         <td className="px-3 py-3 text-sm text-muted-foreground whitespace-nowrap">
                           {item.rollName || "—"}
                         </td>
                         <td className="px-3 py-3 whitespace-nowrap">
                           {item.hsnCode
-                            ? <span className="text-xs font-mono text-foreground">{item.hsnCode}</span>
+                            ? <span className="text-sm font-mono text-foreground">{item.hsnCode}</span>
                             : <span className="text-muted-foreground/40">—</span>}
                         </td>
                         <td className="px-3 py-3 text-right text-sm text-foreground whitespace-nowrap">
@@ -1174,7 +1177,7 @@ function VendorDetailView({ vendor, purchases, onBack, onEdit, onDelete, onAddPu
                   </tbody>
                   <tfoot className="bg-muted/30 border-t border-border/50">
                     <tr>
-                      <td colSpan={6} className="px-4 py-2.5 text-xs font-medium text-muted-foreground">
+                      <td colSpan={7} className="px-4 py-2.5 text-xs font-medium text-muted-foreground">
                         {viewingPurchase.items.length} item{viewingPurchase.items.length !== 1 ? "s" : ""}
                       </td>
                       <td className="px-3 py-2.5 text-right text-sm font-bold text-foreground whitespace-nowrap">
