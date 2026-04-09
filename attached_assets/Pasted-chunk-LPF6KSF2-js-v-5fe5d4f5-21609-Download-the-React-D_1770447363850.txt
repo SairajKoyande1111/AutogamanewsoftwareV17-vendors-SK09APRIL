@@ -1,0 +1,353 @@
+chunk-LPF6KSF2.js?v=5fe5d4f5:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+job-details.tsx:264 Uncaught TypeError: Cannot read properties of undefined (reading 'toLocaleString')
+    at job-details.tsx:264:109
+    at Array.map (<anonymous>)
+    at JobDetailsPage (job-details.tsx:250:31)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=5fe5d4f5:11596:26)
+    at updateFunctionComponent (chunk-LPF6KSF2.js?v=5fe5d4f5:14630:28)
+    at beginWork (chunk-LPF6KSF2.js?v=5fe5d4f5:15972:22)
+    at HTMLUnknownElement.callCallback2 (chunk-LPF6KSF2.js?v=5fe5d4f5:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-LPF6KSF2.js?v=5fe5d4f5:3705:24)
+    at invokeGuardedCallback (chunk-LPF6KSF2.js?v=5fe5d4f5:3739:39)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=5fe5d4f5:19818:15)
+(anonymous) @ job-details.tsx:264
+JobDetailsPage @ job-details.tsx:250
+renderWithHooks @ chunk-LPF6KSF2.js?v=5fe5d4f5:11596
+updateFunctionComponent @ chunk-LPF6KSF2.js?v=5fe5d4f5:14630
+beginWork @ chunk-LPF6KSF2.js?v=5fe5d4f5:15972
+callCallback2 @ chunk-LPF6KSF2.js?v=5fe5d4f5:3680
+invokeGuardedCallbackDev @ chunk-LPF6KSF2.js?v=5fe5d4f5:3705
+invokeGuardedCallback @ chunk-LPF6KSF2.js?v=5fe5d4f5:3739
+beginWork$1 @ chunk-LPF6KSF2.js?v=5fe5d4f5:19818
+performUnitOfWork @ chunk-LPF6KSF2.js?v=5fe5d4f5:19251
+workLoopSync @ chunk-LPF6KSF2.js?v=5fe5d4f5:19190
+renderRootSync @ chunk-LPF6KSF2.js?v=5fe5d4f5:19169
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18927
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=5fe5d4f5:9166
+(anonymous) @ chunk-LPF6KSF2.js?v=5fe5d4f5:18677
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5fe5d4f5:537
+flush @ @tanstack_react-query.js?v=5fe5d4f5:551
+batch @ @tanstack_react-query.js?v=5fe5d4f5:569
+#dispatch @ @tanstack_react-query.js?v=5fe5d4f5:963
+setData @ @tanstack_react-query.js?v=5fe5d4f5:672
+onSuccess @ @tanstack_react-query.js?v=5fe5d4f5:865
+resolve @ @tanstack_react-query.js?v=5fe5d4f5:442
+Promise.then
+run @ @tanstack_react-query.js?v=5fe5d4f5:481
+start @ @tanstack_react-query.js?v=5fe5d4f5:518
+fetch @ @tanstack_react-query.js?v=5fe5d4f5:893
+#executeFetch @ @tanstack_react-query.js?v=5fe5d4f5:1963
+onSubscribe @ @tanstack_react-query.js?v=5fe5d4f5:1840
+subscribe @ @tanstack_react-query.js?v=5fe5d4f5:19
+(anonymous) @ @tanstack_react-query.js?v=5fe5d4f5:2962
+subscribeToStore @ chunk-LPF6KSF2.js?v=5fe5d4f5:12032
+commitHookEffectListMount @ chunk-LPF6KSF2.js?v=5fe5d4f5:16963
+commitPassiveMountOnFiber @ chunk-LPF6KSF2.js?v=5fe5d4f5:18206
+commitPassiveMountEffects_complete @ chunk-LPF6KSF2.js?v=5fe5d4f5:18179
+commitPassiveMountEffects_begin @ chunk-LPF6KSF2.js?v=5fe5d4f5:18169
+commitPassiveMountEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:18159
+flushPassiveEffectsImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19543
+flushPassiveEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:19500
+commitRootImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19469
+commitRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:19330
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18948
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=5fe5d4f5:9166
+(anonymous) @ chunk-LPF6KSF2.js?v=5fe5d4f5:18677
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5fe5d4f5:537
+flush @ @tanstack_react-query.js?v=5fe5d4f5:551
+batch @ @tanstack_react-query.js?v=5fe5d4f5:569
+#dispatch @ @tanstack_react-query.js?v=5fe5d4f5:963
+setData @ @tanstack_react-query.js?v=5fe5d4f5:672
+onSuccess @ @tanstack_react-query.js?v=5fe5d4f5:865
+resolve @ @tanstack_react-query.js?v=5fe5d4f5:442
+Promise.then
+run @ @tanstack_react-query.js?v=5fe5d4f5:481
+start @ @tanstack_react-query.js?v=5fe5d4f5:518
+fetch @ @tanstack_react-query.js?v=5fe5d4f5:893
+#executeFetch @ @tanstack_react-query.js?v=5fe5d4f5:1963
+onSubscribe @ @tanstack_react-query.js?v=5fe5d4f5:1840
+subscribe @ @tanstack_react-query.js?v=5fe5d4f5:19
+(anonymous) @ @tanstack_react-query.js?v=5fe5d4f5:2962
+subscribeToStore @ chunk-LPF6KSF2.js?v=5fe5d4f5:12032
+commitHookEffectListMount @ chunk-LPF6KSF2.js?v=5fe5d4f5:16963
+commitPassiveMountOnFiber @ chunk-LPF6KSF2.js?v=5fe5d4f5:18206
+commitPassiveMountEffects_complete @ chunk-LPF6KSF2.js?v=5fe5d4f5:18179
+commitPassiveMountEffects_begin @ chunk-LPF6KSF2.js?v=5fe5d4f5:18169
+commitPassiveMountEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:18159
+flushPassiveEffectsImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19543
+flushPassiveEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:19500
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18921
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=5fe5d4f5:9166
+commitRootImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19485
+commitRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:19330
+finishConcurrentRender @ chunk-LPF6KSF2.js?v=5fe5d4f5:18858
+performConcurrentWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18768
+workLoop @ chunk-LPF6KSF2.js?v=5fe5d4f5:197
+flushWork @ chunk-LPF6KSF2.js?v=5fe5d4f5:176
+performWorkUntilDeadline @ chunk-LPF6KSF2.js?v=5fe5d4f5:384
+job-details.tsx:264 Uncaught TypeError: Cannot read properties of undefined (reading 'toLocaleString')
+    at job-details.tsx:264:109
+    at Array.map (<anonymous>)
+    at JobDetailsPage (job-details.tsx:250:31)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=5fe5d4f5:11596:26)
+    at updateFunctionComponent (chunk-LPF6KSF2.js?v=5fe5d4f5:14630:28)
+    at beginWork (chunk-LPF6KSF2.js?v=5fe5d4f5:15972:22)
+    at HTMLUnknownElement.callCallback2 (chunk-LPF6KSF2.js?v=5fe5d4f5:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-LPF6KSF2.js?v=5fe5d4f5:3705:24)
+    at invokeGuardedCallback (chunk-LPF6KSF2.js?v=5fe5d4f5:3739:39)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=5fe5d4f5:19818:15)
+(anonymous) @ job-details.tsx:264
+JobDetailsPage @ job-details.tsx:250
+renderWithHooks @ chunk-LPF6KSF2.js?v=5fe5d4f5:11596
+updateFunctionComponent @ chunk-LPF6KSF2.js?v=5fe5d4f5:14630
+beginWork @ chunk-LPF6KSF2.js?v=5fe5d4f5:15972
+callCallback2 @ chunk-LPF6KSF2.js?v=5fe5d4f5:3680
+invokeGuardedCallbackDev @ chunk-LPF6KSF2.js?v=5fe5d4f5:3705
+invokeGuardedCallback @ chunk-LPF6KSF2.js?v=5fe5d4f5:3739
+beginWork$1 @ chunk-LPF6KSF2.js?v=5fe5d4f5:19818
+performUnitOfWork @ chunk-LPF6KSF2.js?v=5fe5d4f5:19251
+workLoopSync @ chunk-LPF6KSF2.js?v=5fe5d4f5:19190
+renderRootSync @ chunk-LPF6KSF2.js?v=5fe5d4f5:19169
+recoverFromConcurrentError @ chunk-LPF6KSF2.js?v=5fe5d4f5:18786
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18932
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=5fe5d4f5:9166
+(anonymous) @ chunk-LPF6KSF2.js?v=5fe5d4f5:18677
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5fe5d4f5:537
+flush @ @tanstack_react-query.js?v=5fe5d4f5:551
+batch @ @tanstack_react-query.js?v=5fe5d4f5:569
+#dispatch @ @tanstack_react-query.js?v=5fe5d4f5:963
+setData @ @tanstack_react-query.js?v=5fe5d4f5:672
+onSuccess @ @tanstack_react-query.js?v=5fe5d4f5:865
+resolve @ @tanstack_react-query.js?v=5fe5d4f5:442
+Promise.then
+run @ @tanstack_react-query.js?v=5fe5d4f5:481
+start @ @tanstack_react-query.js?v=5fe5d4f5:518
+fetch @ @tanstack_react-query.js?v=5fe5d4f5:893
+#executeFetch @ @tanstack_react-query.js?v=5fe5d4f5:1963
+onSubscribe @ @tanstack_react-query.js?v=5fe5d4f5:1840
+subscribe @ @tanstack_react-query.js?v=5fe5d4f5:19
+(anonymous) @ @tanstack_react-query.js?v=5fe5d4f5:2962
+subscribeToStore @ chunk-LPF6KSF2.js?v=5fe5d4f5:12032
+commitHookEffectListMount @ chunk-LPF6KSF2.js?v=5fe5d4f5:16963
+commitPassiveMountOnFiber @ chunk-LPF6KSF2.js?v=5fe5d4f5:18206
+commitPassiveMountEffects_complete @ chunk-LPF6KSF2.js?v=5fe5d4f5:18179
+commitPassiveMountEffects_begin @ chunk-LPF6KSF2.js?v=5fe5d4f5:18169
+commitPassiveMountEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:18159
+flushPassiveEffectsImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19543
+flushPassiveEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:19500
+commitRootImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19469
+commitRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:19330
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18948
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=5fe5d4f5:9166
+(anonymous) @ chunk-LPF6KSF2.js?v=5fe5d4f5:18677
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5fe5d4f5:537
+flush @ @tanstack_react-query.js?v=5fe5d4f5:551
+batch @ @tanstack_react-query.js?v=5fe5d4f5:569
+#dispatch @ @tanstack_react-query.js?v=5fe5d4f5:963
+setData @ @tanstack_react-query.js?v=5fe5d4f5:672
+onSuccess @ @tanstack_react-query.js?v=5fe5d4f5:865
+resolve @ @tanstack_react-query.js?v=5fe5d4f5:442
+Promise.then
+run @ @tanstack_react-query.js?v=5fe5d4f5:481
+start @ @tanstack_react-query.js?v=5fe5d4f5:518
+fetch @ @tanstack_react-query.js?v=5fe5d4f5:893
+#executeFetch @ @tanstack_react-query.js?v=5fe5d4f5:1963
+onSubscribe @ @tanstack_react-query.js?v=5fe5d4f5:1840
+subscribe @ @tanstack_react-query.js?v=5fe5d4f5:19
+(anonymous) @ @tanstack_react-query.js?v=5fe5d4f5:2962
+subscribeToStore @ chunk-LPF6KSF2.js?v=5fe5d4f5:12032
+commitHookEffectListMount @ chunk-LPF6KSF2.js?v=5fe5d4f5:16963
+commitPassiveMountOnFiber @ chunk-LPF6KSF2.js?v=5fe5d4f5:18206
+commitPassiveMountEffects_complete @ chunk-LPF6KSF2.js?v=5fe5d4f5:18179
+commitPassiveMountEffects_begin @ chunk-LPF6KSF2.js?v=5fe5d4f5:18169
+commitPassiveMountEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:18159
+flushPassiveEffectsImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19543
+flushPassiveEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:19500
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18921
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=5fe5d4f5:9166
+commitRootImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19485
+commitRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:19330
+finishConcurrentRender @ chunk-LPF6KSF2.js?v=5fe5d4f5:18858
+performConcurrentWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18768
+workLoop @ chunk-LPF6KSF2.js?v=5fe5d4f5:197
+flushWork @ chunk-LPF6KSF2.js?v=5fe5d4f5:176
+performWorkUntilDeadline @ chunk-LPF6KSF2.js?v=5fe5d4f5:384
+chunk-LPF6KSF2.js?v=5fe5d4f5:14080 The above error occurred in the <JobDetailsPage> component:
+
+    at JobDetailsPage (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/src/pages/job-details.tsx:51:22)
+    at ProtectedRoute (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/src/App.tsx:38:38)
+    at Route (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5fe5d4f5:322:16)
+    at Switch (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5fe5d4f5:378:17)
+    at Router
+    at Provider (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-O6SHKWAT.js?v=5fe5d4f5:47:15)
+    at TooltipProvider (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=5fe5d4f5:59:5)
+    at QueryClientProvider (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=5fe5d4f5:2747:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-LPF6KSF2.js?v=5fe5d4f5:14080
+update.callback @ chunk-LPF6KSF2.js?v=5fe5d4f5:14100
+callCallback @ chunk-LPF6KSF2.js?v=5fe5d4f5:11296
+commitUpdateQueue @ chunk-LPF6KSF2.js?v=5fe5d4f5:11313
+commitLayoutEffectOnFiber @ chunk-LPF6KSF2.js?v=5fe5d4f5:17141
+commitLayoutMountEffects_complete @ chunk-LPF6KSF2.js?v=5fe5d4f5:18030
+commitLayoutEffects_begin @ chunk-LPF6KSF2.js?v=5fe5d4f5:18019
+commitLayoutEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:17970
+commitRootImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19406
+commitRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:19330
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18948
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=5fe5d4f5:9166
+(anonymous) @ chunk-LPF6KSF2.js?v=5fe5d4f5:18677
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5fe5d4f5:537
+flush @ @tanstack_react-query.js?v=5fe5d4f5:551
+batch @ @tanstack_react-query.js?v=5fe5d4f5:569
+#dispatch @ @tanstack_react-query.js?v=5fe5d4f5:963
+setData @ @tanstack_react-query.js?v=5fe5d4f5:672
+onSuccess @ @tanstack_react-query.js?v=5fe5d4f5:865
+resolve @ @tanstack_react-query.js?v=5fe5d4f5:442
+Promise.then
+run @ @tanstack_react-query.js?v=5fe5d4f5:481
+start @ @tanstack_react-query.js?v=5fe5d4f5:518
+fetch @ @tanstack_react-query.js?v=5fe5d4f5:893
+#executeFetch @ @tanstack_react-query.js?v=5fe5d4f5:1963
+onSubscribe @ @tanstack_react-query.js?v=5fe5d4f5:1840
+subscribe @ @tanstack_react-query.js?v=5fe5d4f5:19
+(anonymous) @ @tanstack_react-query.js?v=5fe5d4f5:2962
+subscribeToStore @ chunk-LPF6KSF2.js?v=5fe5d4f5:12032
+commitHookEffectListMount @ chunk-LPF6KSF2.js?v=5fe5d4f5:16963
+commitPassiveMountOnFiber @ chunk-LPF6KSF2.js?v=5fe5d4f5:18206
+commitPassiveMountEffects_complete @ chunk-LPF6KSF2.js?v=5fe5d4f5:18179
+commitPassiveMountEffects_begin @ chunk-LPF6KSF2.js?v=5fe5d4f5:18169
+commitPassiveMountEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:18159
+flushPassiveEffectsImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19543
+flushPassiveEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:19500
+commitRootImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19469
+commitRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:19330
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18948
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=5fe5d4f5:9166
+(anonymous) @ chunk-LPF6KSF2.js?v=5fe5d4f5:18677
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5fe5d4f5:537
+flush @ @tanstack_react-query.js?v=5fe5d4f5:551
+batch @ @tanstack_react-query.js?v=5fe5d4f5:569
+#dispatch @ @tanstack_react-query.js?v=5fe5d4f5:963
+setData @ @tanstack_react-query.js?v=5fe5d4f5:672
+onSuccess @ @tanstack_react-query.js?v=5fe5d4f5:865
+resolve @ @tanstack_react-query.js?v=5fe5d4f5:442
+Promise.then
+run @ @tanstack_react-query.js?v=5fe5d4f5:481
+start @ @tanstack_react-query.js?v=5fe5d4f5:518
+fetch @ @tanstack_react-query.js?v=5fe5d4f5:893
+#executeFetch @ @tanstack_react-query.js?v=5fe5d4f5:1963
+onSubscribe @ @tanstack_react-query.js?v=5fe5d4f5:1840
+subscribe @ @tanstack_react-query.js?v=5fe5d4f5:19
+(anonymous) @ @tanstack_react-query.js?v=5fe5d4f5:2962
+subscribeToStore @ chunk-LPF6KSF2.js?v=5fe5d4f5:12032
+commitHookEffectListMount @ chunk-LPF6KSF2.js?v=5fe5d4f5:16963
+commitPassiveMountOnFiber @ chunk-LPF6KSF2.js?v=5fe5d4f5:18206
+commitPassiveMountEffects_complete @ chunk-LPF6KSF2.js?v=5fe5d4f5:18179
+commitPassiveMountEffects_begin @ chunk-LPF6KSF2.js?v=5fe5d4f5:18169
+commitPassiveMountEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:18159
+flushPassiveEffectsImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19543
+flushPassiveEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:19500
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18921
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=5fe5d4f5:9166
+commitRootImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19485
+commitRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:19330
+finishConcurrentRender @ chunk-LPF6KSF2.js?v=5fe5d4f5:18858
+performConcurrentWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18768
+workLoop @ chunk-LPF6KSF2.js?v=5fe5d4f5:197
+flushWork @ chunk-LPF6KSF2.js?v=5fe5d4f5:176
+performWorkUntilDeadline @ chunk-LPF6KSF2.js?v=5fe5d4f5:384
+chunk-LPF6KSF2.js?v=5fe5d4f5:9176 Uncaught TypeError: Cannot read properties of undefined (reading 'toLocaleString')
+    at job-details.tsx:264:109
+    at Array.map (<anonymous>)
+    at JobDetailsPage (job-details.tsx:250:31)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=5fe5d4f5:11596:26)
+    at updateFunctionComponent (chunk-LPF6KSF2.js?v=5fe5d4f5:14630:28)
+    at beginWork (chunk-LPF6KSF2.js?v=5fe5d4f5:15972:22)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=5fe5d4f5:19806:22)
+    at performUnitOfWork (chunk-LPF6KSF2.js?v=5fe5d4f5:19251:20)
+    at workLoopSync (chunk-LPF6KSF2.js?v=5fe5d4f5:19190:13)
+    at renderRootSync (chunk-LPF6KSF2.js?v=5fe5d4f5:19169:15)
+(anonymous) @ job-details.tsx:264
+JobDetailsPage @ job-details.tsx:250
+renderWithHooks @ chunk-LPF6KSF2.js?v=5fe5d4f5:11596
+updateFunctionComponent @ chunk-LPF6KSF2.js?v=5fe5d4f5:14630
+beginWork @ chunk-LPF6KSF2.js?v=5fe5d4f5:15972
+beginWork$1 @ chunk-LPF6KSF2.js?v=5fe5d4f5:19806
+performUnitOfWork @ chunk-LPF6KSF2.js?v=5fe5d4f5:19251
+workLoopSync @ chunk-LPF6KSF2.js?v=5fe5d4f5:19190
+renderRootSync @ chunk-LPF6KSF2.js?v=5fe5d4f5:19169
+recoverFromConcurrentError @ chunk-LPF6KSF2.js?v=5fe5d4f5:18786
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18932
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=5fe5d4f5:9166
+(anonymous) @ chunk-LPF6KSF2.js?v=5fe5d4f5:18677
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5fe5d4f5:537
+flush @ @tanstack_react-query.js?v=5fe5d4f5:551
+batch @ @tanstack_react-query.js?v=5fe5d4f5:569
+#dispatch @ @tanstack_react-query.js?v=5fe5d4f5:963
+setData @ @tanstack_react-query.js?v=5fe5d4f5:672
+onSuccess @ @tanstack_react-query.js?v=5fe5d4f5:865
+resolve @ @tanstack_react-query.js?v=5fe5d4f5:442
+Promise.then
+run @ @tanstack_react-query.js?v=5fe5d4f5:481
+start @ @tanstack_react-query.js?v=5fe5d4f5:518
+fetch @ @tanstack_react-query.js?v=5fe5d4f5:893
+#executeFetch @ @tanstack_react-query.js?v=5fe5d4f5:1963
+onSubscribe @ @tanstack_react-query.js?v=5fe5d4f5:1840
+subscribe @ @tanstack_react-query.js?v=5fe5d4f5:19
+(anonymous) @ @tanstack_react-query.js?v=5fe5d4f5:2962
+subscribeToStore @ chunk-LPF6KSF2.js?v=5fe5d4f5:12032
+commitHookEffectListMount @ chunk-LPF6KSF2.js?v=5fe5d4f5:16963
+commitPassiveMountOnFiber @ chunk-LPF6KSF2.js?v=5fe5d4f5:18206
+commitPassiveMountEffects_complete @ chunk-LPF6KSF2.js?v=5fe5d4f5:18179
+commitPassiveMountEffects_begin @ chunk-LPF6KSF2.js?v=5fe5d4f5:18169
+commitPassiveMountEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:18159
+flushPassiveEffectsImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19543
+flushPassiveEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:19500
+commitRootImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19469
+commitRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:19330
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18948
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=5fe5d4f5:9166
+(anonymous) @ chunk-LPF6KSF2.js?v=5fe5d4f5:18677
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=5fe5d4f5:537
+flush @ @tanstack_react-query.js?v=5fe5d4f5:551
+batch @ @tanstack_react-query.js?v=5fe5d4f5:569
+#dispatch @ @tanstack_react-query.js?v=5fe5d4f5:963
+setData @ @tanstack_react-query.js?v=5fe5d4f5:672
+onSuccess @ @tanstack_react-query.js?v=5fe5d4f5:865
+resolve @ @tanstack_react-query.js?v=5fe5d4f5:442
+Promise.then
+run @ @tanstack_react-query.js?v=5fe5d4f5:481
+start @ @tanstack_react-query.js?v=5fe5d4f5:518
+fetch @ @tanstack_react-query.js?v=5fe5d4f5:893
+#executeFetch @ @tanstack_react-query.js?v=5fe5d4f5:1963
+onSubscribe @ @tanstack_react-query.js?v=5fe5d4f5:1840
+subscribe @ @tanstack_react-query.js?v=5fe5d4f5:19
+(anonymous) @ @tanstack_react-query.js?v=5fe5d4f5:2962
+subscribeToStore @ chunk-LPF6KSF2.js?v=5fe5d4f5:12032
+commitHookEffectListMount @ chunk-LPF6KSF2.js?v=5fe5d4f5:16963
+commitPassiveMountOnFiber @ chunk-LPF6KSF2.js?v=5fe5d4f5:18206
+commitPassiveMountEffects_complete @ chunk-LPF6KSF2.js?v=5fe5d4f5:18179
+commitPassiveMountEffects_begin @ chunk-LPF6KSF2.js?v=5fe5d4f5:18169
+commitPassiveMountEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:18159
+flushPassiveEffectsImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19543
+flushPassiveEffects @ chunk-LPF6KSF2.js?v=5fe5d4f5:19500
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18921
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=5fe5d4f5:9166
+commitRootImpl @ chunk-LPF6KSF2.js?v=5fe5d4f5:19485
+commitRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:19330
+finishConcurrentRender @ chunk-LPF6KSF2.js?v=5fe5d4f5:18858
+performConcurrentWorkOnRoot @ chunk-LPF6KSF2.js?v=5fe5d4f5:18768
+workLoop @ chunk-LPF6KSF2.js?v=5fe5d4f5:197
+flushWork @ chunk-LPF6KSF2.js?v=5fe5d4f5:176
+performWorkUntilDeadline @ chunk-LPF6KSF2.js?v=5fe5d4f5:384

@@ -1,0 +1,50 @@
+chunk-LPF6KSF2.js?v=408de889:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+api/user:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+inquiry.tsx:784 Uncaught TypeError: Cannot read properties of undefined (reading 'map')
+    at inquiry.tsx:784:45
+    at Array.map (<anonymous>)
+    at InquiryPage (inquiry.tsx:752:30)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=408de889:11596:26)
+    at updateFunctionComponent (chunk-LPF6KSF2.js?v=408de889:14630:28)
+    at beginWork (chunk-LPF6KSF2.js?v=408de889:15972:22)
+    at HTMLUnknownElement.callCallback2 (chunk-LPF6KSF2.js?v=408de889:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-LPF6KSF2.js?v=408de889:3705:24)
+    at invokeGuardedCallback (chunk-LPF6KSF2.js?v=408de889:3739:39)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=408de889:19818:15)
+inquiry.tsx:784 Uncaught TypeError: Cannot read properties of undefined (reading 'map')
+    at inquiry.tsx:784:45
+    at Array.map (<anonymous>)
+    at InquiryPage (inquiry.tsx:752:30)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=408de889:11596:26)
+    at updateFunctionComponent (chunk-LPF6KSF2.js?v=408de889:14630:28)
+    at beginWork (chunk-LPF6KSF2.js?v=408de889:15972:22)
+    at HTMLUnknownElement.callCallback2 (chunk-LPF6KSF2.js?v=408de889:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-LPF6KSF2.js?v=408de889:3705:24)
+    at invokeGuardedCallback (chunk-LPF6KSF2.js?v=408de889:3739:39)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=408de889:19818:15)
+chunk-LPF6KSF2.js?v=408de889:14080 The above error occurred in the <InquiryPage> component:
+
+    at InquiryPage (https://c1a21997-fea7-4a31-b70b-7789c34cd3fc-00-wdh928fh5j71.picard.replit.dev/src/pages/inquiry.tsx:73:21)
+    at ProtectedRoute (https://c1a21997-fea7-4a31-b70b-7789c34cd3fc-00-wdh928fh5j71.picard.replit.dev/src/App.tsx:34:38)
+    at Route (https://c1a21997-fea7-4a31-b70b-7789c34cd3fc-00-wdh928fh5j71.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=408de889:322:16)
+    at Switch (https://c1a21997-fea7-4a31-b70b-7789c34cd3fc-00-wdh928fh5j71.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=408de889:378:17)
+    at Router
+    at Provider (https://c1a21997-fea7-4a31-b70b-7789c34cd3fc-00-wdh928fh5j71.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-TACGZKHJ.js?v=408de889:47:15)
+    at TooltipProvider (https://c1a21997-fea7-4a31-b70b-7789c34cd3fc-00-wdh928fh5j71.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=408de889:59:5)
+    at QueryClientProvider (https://c1a21997-fea7-4a31-b70b-7789c34cd3fc-00-wdh928fh5j71.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=408de889:2747:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-LPF6KSF2.js?v=408de889:14080
+chunk-LPF6KSF2.js?v=408de889:9176 Uncaught TypeError: Cannot read properties of undefined (reading 'map')
+    at inquiry.tsx:784:45
+    at Array.map (<anonymous>)
+    at InquiryPage (inquiry.tsx:752:30)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=408de889:11596:26)
+    at updateFunctionComponent (chunk-LPF6KSF2.js?v=408de889:14630:28)
+    at beginWork (chunk-LPF6KSF2.js?v=408de889:15972:22)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=408de889:19806:22)
+    at performUnitOfWork (chunk-LPF6KSF2.js?v=408de889:19251:20)
+    at workLoopSync (chunk-LPF6KSF2.js?v=408de889:19190:13)
+    at renderRootSync (chunk-LPF6KSF2.js?v=408de889:19169:15)

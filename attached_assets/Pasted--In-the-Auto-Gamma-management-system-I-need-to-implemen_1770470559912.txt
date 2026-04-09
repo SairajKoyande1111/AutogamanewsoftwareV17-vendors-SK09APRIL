@@ -1,0 +1,62 @@
+```
+In the Auto Gamma management system, I need to implement PPF (Paint Protection Film) roll quantity deduction logic when updating job cards and invoices.
+
+**Required Implementation:**
+
+## JOB CARD UPDATE Logic:
+
+When a user clicks "Update Job Card":
+
+1. **Check if an invoice exists** for this job card in the invoice section (database):
+   - Query the invoices collection/table to find if there's an active invoice linked to this job card ID
+   - An invoice is considered "existing" only if it's present in the database (not deleted)
+
+2. **If NO invoice exists** (either never created or was deleted):
+   - Deduct the PPF roll quantities used in this job card from their respective roll stocks
+   - For each PPF item in the job card:
+     - Find the roll(s) specified (Roll1, Roll2, etc.)
+     - Deduct the sqft used from the available stock of those specific rolls
+     - Update the roll stock quantities in the database
+   - Then create a new invoice for this job card
+
+3. **If an invoice DOES exist** in the invoice section:
+   - Do NOT deduct any roll quantities (they were already deducted when the invoice was first created)
+   - Only update the job card details and the existing invoice
+
+## EXCEPTION - When Updating Invoice Directly:
+
+**Important Exception:** When updating an invoice directly (from the invoice section), regardless of whether the invoice already exists or not, deduct the additional quantity that has been added:
+
+- Compare the previous invoice state with the updated invoice state for each roll
+- Calculate the difference in quantities:
+  - **For newly added rolls**: Deduct the entire quantity of the new roll
+  - **For existing rolls with increased quantity**: Deduct only the additional quantity (new quantity - old quantity)
+  - **For existing rolls with same or decreased quantity**: Do NOT deduct anything
+
+**Examples:**
+
+**Example 1 - New rolls added:**
+- Original invoice: Roll1 (100sqft), Roll2 (100sqft)
+- Updated invoice: Roll1 (100sqft), Roll2 (100sqft), Roll3 (50sqft), Roll4 (75sqft)
+- Action: Deduct 50sqft from Roll3 and 75sqft from Roll4
+
+**Example 2 - Quantity increased in existing rolls:**
+- Original invoice: Roll1 (100sqft), Roll2 (100sqft)
+- Updated invoice: Roll1 (150sqft), Roll2 (100sqft)
+- Action: Deduct only 50sqft from Roll1 (150 - 100 = 50)
+
+**Example 3 - Combination of both:**
+- Original invoice: Roll1 (100sqft), Roll2 (100sqft)
+- Updated invoice: Roll1 (150sqft), Roll2 (100sqft), Roll3 (80sqft)
+- Action: Deduct 50sqft from Roll1 (additional quantity) and 80sqft from Roll3 (new roll)
+
+**Technical Requirements:**
+- Add a check in job card update logic to query if an invoice with this job card's ID exists
+- Implement roll quantity deduction function that updates the PPF roll stock in the database
+- In invoice update logic, track and compare previous roll quantities with new quantities for each roll
+- Calculate and deduct only the incremental/additional quantities
+- Ensure this happens within a transaction to maintain data consistency
+- Handle edge cases where rolls might not have sufficient quantity
+
+Please implement this logic in both the job card update and invoice update functionalities.
+```

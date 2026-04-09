@@ -1,0 +1,50 @@
+chunk-LPF6KSF2.js?v=cfb1df77:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+/api/user:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+job-details.tsx:257 Uncaught TypeError: Cannot read properties of undefined (reading 'split')
+    at job-details.tsx:257:45
+    at Array.map (<anonymous>)
+    at JobDetailsPage (job-details.tsx:250:31)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=cfb1df77:11596:26)
+    at mountIndeterminateComponent (chunk-LPF6KSF2.js?v=cfb1df77:14974:21)
+    at beginWork (chunk-LPF6KSF2.js?v=cfb1df77:15962:22)
+    at HTMLUnknownElement.callCallback2 (chunk-LPF6KSF2.js?v=cfb1df77:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-LPF6KSF2.js?v=cfb1df77:3705:24)
+    at invokeGuardedCallback (chunk-LPF6KSF2.js?v=cfb1df77:3739:39)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=cfb1df77:19818:15)
+job-details.tsx:257 Uncaught TypeError: Cannot read properties of undefined (reading 'split')
+    at job-details.tsx:257:45
+    at Array.map (<anonymous>)
+    at JobDetailsPage (job-details.tsx:250:31)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=cfb1df77:11596:26)
+    at mountIndeterminateComponent (chunk-LPF6KSF2.js?v=cfb1df77:14974:21)
+    at beginWork (chunk-LPF6KSF2.js?v=cfb1df77:15962:22)
+    at HTMLUnknownElement.callCallback2 (chunk-LPF6KSF2.js?v=cfb1df77:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-LPF6KSF2.js?v=cfb1df77:3705:24)
+    at invokeGuardedCallback (chunk-LPF6KSF2.js?v=cfb1df77:3739:39)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=cfb1df77:19818:15)
+chunk-LPF6KSF2.js?v=cfb1df77:14080 The above error occurred in the <JobDetailsPage> component:
+
+    at JobDetailsPage (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/src/pages/job-details.tsx:51:22)
+    at ProtectedRoute (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/src/App.tsx:38:38)
+    at Route (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=e00972ee:322:16)
+    at Switch (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=e00972ee:378:17)
+    at Router
+    at Provider (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-O6SHKWAT.js?v=cfb1df77:47:15)
+    at TooltipProvider (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=a52d0d8f:59:5)
+    at QueryClientProvider (https://c44c9091-ea98-4692-9b14-d94b63cf7d0c-00-1xs2rw0ce3460.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=095e39cf:2747:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-LPF6KSF2.js?v=cfb1df77:14080
+chunk-LPF6KSF2.js?v=cfb1df77:9176 Uncaught TypeError: Cannot read properties of undefined (reading 'split')
+    at job-details.tsx:257:45
+    at Array.map (<anonymous>)
+    at JobDetailsPage (job-details.tsx:250:31)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=cfb1df77:11596:26)
+    at mountIndeterminateComponent (chunk-LPF6KSF2.js?v=cfb1df77:14974:21)
+    at beginWork (chunk-LPF6KSF2.js?v=cfb1df77:15962:22)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=cfb1df77:19806:22)
+    at performUnitOfWork (chunk-LPF6KSF2.js?v=cfb1df77:19251:20)
+    at workLoopSync (chunk-LPF6KSF2.js?v=cfb1df77:19190:13)
+    at renderRootSync (chunk-LPF6KSF2.js?v=cfb1df77:19169:15)

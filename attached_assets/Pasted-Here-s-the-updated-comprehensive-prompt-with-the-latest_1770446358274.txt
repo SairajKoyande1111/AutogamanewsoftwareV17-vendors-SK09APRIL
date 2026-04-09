@@ -1,0 +1,188 @@
+Here's the updated comprehensive prompt with the latest console logs:
+
+---
+
+**ISSUE: Multiple Separate PPF Cards Created When Editing Jobs**
+
+## Overview
+An Auto Gamma management system has an issue with PPF (Paint Protection Film) roll management where the UI behaves inconsistently when adding rolls during new job creation versus editing existing jobs.
+
+---
+
+## Current Behavior:
+
+**Scenario 1 - Adding PPF during new job creation:**
+- When adding a PPF type for the first time, the system displays a single card/section
+- User selects: PPF type (Garware Elite), Warranty (TPU 5 Years Gloss), and multiple Rolls
+- The "SELECTED PPF" section shows: "Garware Elite (Small Cars - TPU 5 Years Gloss) - Quantity: 100sqft (from Roll1), Quantity: 100sqft (from Roll2)"
+- All roll selections are grouped together in ONE card under the same PPF entry
+- Shows "(1 added)" in the PPF section header
+- **This works correctly ✅**
+
+**Scenario 2 - Adding PPF rolls during job edit:**
+- When editing an existing job and adding additional rolls to the same PPF type
+- The system creates SEPARATE cards for each roll selection
+- The "SELECTED PPF" section now shows TWO separate entries:
+  1. "Garware Elite (Small Cars - TPU 5 Years Gloss) - Quantity: 100sqft (from Roll2)"
+  2. "Garware Elite (Small Cars - TPU 5 Years Gloss) - Quantity: 400sqft (from Roll1)"
+- Shows "(2 added)" in the PPF section header
+- Each roll appears as a separate card with its own delete button
+- **This is incorrect ❌**
+
+---
+
+## Expected Behavior:
+
+The UI should behave consistently in both scenarios:
+- Whether adding rolls during initial job creation OR during job editing, all rolls for the same PPF type and warranty combination should be grouped together in a SINGLE card
+- The display should show: "Garware Elite (Small Cars - TPU 5 Years Gloss) - Quantity: XXXsqft (from Roll1), Quantity: XXXsqft (from Roll2)" as ONE entry
+- Should maintain "(1 added)" status when it's the same PPF type/warranty combination
+
+---
+
+## Investigation & Root Cause:
+
+The existing PPF data is being fetched properly from the backend, but the system is NOT detecting the existing PPF card properly during the matching process.
+
+**Latest Console Log Evidence:**
+
+```
+add-job.tsx:151 Fetching job for edit, jobId: 6986da171ab4fc9540367c95
+
+add-job.tsx:168 Job ID effect triggered for 6986da171ab4fc9540367c95 - forcing refetch
+
+add-job.tsx:155 Fetched job data: Object
+  // Job data fetched successfully from backend
+
+add-job.tsx:177 Resetting form with matched jobToEdit data for jobId: 6986da171ab4fc9540367c95
+  // Form reset with existing job data
+
+add-job.tsx:442 === Adding PPF Roll ===
+add-job.tsx:443 Selected PPF: Object
+  // User selected PPF from dropdown
+
+add-job.tsx:444 Selected Warranty: TPU 5 Years Gloss
+  // User selected warranty
+
+add-job.tsx:445 Selected Roll: Object
+  // User selected roll to add
+
+add-job.tsx:446 Quantity Used: 100
+  // User entered quantity
+
+add-job.tsx:449 Current PPF List in form: Array(1)
+  // There IS an existing PPF entry loaded from backend
+
+add-job.tsx:456 Checking match for field: Object
+  // Attempting to match with existing PPF entry
+
+add-job.tsx:467 Found existing match index: -1
+  // ❌ MATCH FAILED - No match found even though there's 1 existing PPF entry
+```
+
+**Critical Finding:**
+
+The logs show that:
+1. Job data is successfully fetched (line 155)
+2. Form is reset with the fetched data (line 177)
+3. Current PPF List has 1 existing entry (line 449: `Array(1)`)
+4. User tries to add a roll to the same PPF type and warranty
+5. **Matching logic fails to find the existing entry** (line 467: `Found existing match index: -1`)
+6. System creates a NEW separate card instead of adding to the existing one
+
+**Previous Detailed Evidence:**
+
+From earlier investigation, the matching logic revealed:
+
+```
+add-job.tsx:456 Checking match for field: {
+  fieldPpfId: 'undefined',  // ❌ PROBLEM: ppfId is undefined
+  pId: '69748478d9197a6bb017c453',
+  fieldWarranty: 'TPU 5 Years Gloss',
+  selectedWarranty: 'TPU 5 Years Gloss',
+  isMatch: false  // ❌ Match fails because ppfId is undefined
+}
+```
+
+---
+
+## Root Cause Identified:
+
+When editing a job, the existing PPF data fetched from the backend is **missing the `ppfId` field** that the matching logic requires.
+
+**The Problem Flow:**
+
+1. Job data is fetched from backend (line 155 in add-job.tsx) with PPF information
+2. Form is reset with the fetched job data (line 177 in add-job.tsx: "Resetting form with matched jobToEdit data")
+3. The loaded PPF data structure doesn't include a `ppfId` field
+4. Current PPF List shows Array(1) - one existing PPF entry is present
+5. When user adds a new roll to the same PPF type, the matching logic (line 456 in add-job.tsx) tries to compare `fieldPpfId` with the selected PPF's ID
+6. Since `fieldPpfId` is `undefined` for the existing entry loaded from the backend, the match fails
+7. Match index returns -1 (no match found) even though the same PPF type/warranty exists
+8. The system treats it as a NEW PPF entry and creates a separate card
+9. Results in duplicate cards for the same PPF type/warranty combination
+
+**Why New Job Creation Works:**
+- When creating a new job, every PPF entry is created through the same "Add PPF" flow
+- Each entry gets a `ppfId` assigned immediately
+- Matching logic works correctly because all entries have `ppfId`
+
+**Why Edit Mode Fails:**
+- Existing PPF data from backend lacks `ppfId` field
+- Matching comparison fails: `undefined !== '69748478d9197a6bb017c453'`
+- Match index returns -1 (no match)
+- Creates a new card with `ppfId` instead of adding to existing card
+- Results in duplicate cards for the same PPF type/warranty combination
+
+---
+
+## Solution Required:
+
+The system needs to ensure that when PPF data is loaded from the backend during job editing, each PPF entry must have a `ppfId` field that can be used for matching. Three possible approaches:
+
+1. **Backend Fix**: Ensure the API response includes `ppfId` field in each PPF object when returning job data
+2. **Frontend Data Mapping**: When processing fetched job data (around line 177 in add-job.tsx where "Resetting form with matched jobToEdit data" happens), map the data to ensure `ppfId` field exists (could use fallback to `_id` or `id` fields if `ppfId` is missing)
+3. **Matching Logic Enhancement**: Update the matching logic (around line 456 in add-job.tsx) to handle cases where `ppfId` might be missing by checking alternative ID fields like `_id` or `id`
+
+**Recommended Approach**: Implement both backend and frontend fixes together to ensure the `ppfId` field is always available and the matching logic is robust enough to handle edge cases.
+
+---
+
+## Additional Debugging Needed:
+
+To further pinpoint the exact structure mismatch, add these console logs:
+
+```javascript
+// Around line 177 - After resetting form
+console.log('=== PPF Data Structure After Form Reset ===');
+console.log('PPF List:', ppfList);
+console.log('First PPF Entry:', ppfList[0]);
+console.log('First PPF Entry Keys:', Object.keys(ppfList[0]));
+console.log('ppfId field exists?:', 'ppfId' in ppfList[0]);
+console.log('ppfId value:', ppfList[0]?.ppfId);
+console.log('Alternative ID fields:', {
+  _id: ppfList[0]?._id,
+  id: ppfList[0]?.id,
+  ppf_id: ppfList[0]?.ppf_id
+});
+```
+
+This will reveal:
+- The exact structure of loaded PPF data
+- Which ID fields are present
+- What field name should be used for matching
+
+---
+
+## Testing Steps After Fix:
+
+1. Create a new job with multiple PPF rolls → Verify single card is created ✅
+2. Save and close the job
+3. Edit that job → Verify existing PPF data loads with `ppfId` field present ✅
+4. Check console: Verify `fieldPpfId` is NOT `undefined` ✅
+5. Add more rolls to the same PPF type and warranty → Verify match index is NOT -1 ✅
+6. Verify rolls are added to the EXISTING card, not creating a new separate card ✅
+7. Verify "(1 added)" count remains, not "(2 added)" ✅
+8. Verify only ONE card displays for the same PPF type/warranty combination ✅
+
+---

@@ -1,0 +1,711 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { api } from "@shared/routes";
+import { z } from "zod";
+import session from "express-session";
+import { connectDB } from "./db";
+import mongoose from "mongoose";
+import cookieParser from "cookie-parser";
+
+export async function registerRoutes(
+  httpServer: Server,
+  app: Express,
+): Promise<Server> {
+  await connectDB();
+
+  app.use(cookieParser());
+
+  app.patch("/api/inquiries/:id", async (req, res) => {
+    try {
+      const inquiry = await storage.updateInquiry(req.params.id, req.body);
+      if (!inquiry)
+        return res.status(404).json({ message: "Inquiry not found" });
+      res.json(inquiry);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  // Session middleware
+  app.set("trust proxy", 1);
+  app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} [express] ${req.method} ${req.url}`);
+    next();
+  });
+
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || "default_secret",
+      store: storage.sessionStore,
+      name: "sid",
+      proxy: true,
+      cookie: {
+        secure: false,
+        sameSite: "lax",
+        httpOnly: true,
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      },
+      rolling: true,
+      resave: true,
+      saveUninitialized: true,
+    }),
+  );
+
+// Clear logs for production once fixed
+app.use((req, res, next) => {
+  if (req.url.startsWith("/api/")) {
+    console.log(`${new Date().toISOString()} [API] ${req.method} ${req.url} - sid: ${req.cookies?.sid ? "exists" : "missing"} - user: ${(req.session as any)?.userId || "none"}`);
+  }
+  next();
+});
+
+  // Auth Routes
+  app.post(api.auth.login.path, async (req, res) => {
+    try {
+      const { email, password } = api.auth.login.input.parse(req.body);
+      const user = await storage.getUserByEmail(email);
+
+      if (!user || user.password !== password) {
+        // Simple password check for now as per instructions (no hash mentioned, but recommended)
+        // For production, use bcrypt.
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      (req.session as any).userId = user.id;
+      res.json({ id: user.id, email: user.email });
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.post(api.auth.logout.path, (req, res) => {
+    req.session.destroy(() => {
+      res.sendStatus(200);
+    });
+  });
+
+  app.get(api.auth.me.path, async (req, res) => {
+    const userId = (req.session as any).userId;
+    if (!userId) return res.sendStatus(401);
+
+    const user = await storage.getUser(userId);
+    if (!user) return res.sendStatus(401);
+
+    res.json({ id: user.id, email: user.email, name: user.name });
+  });
+
+  app.patch("/api/user", async (req, res) => {
+    const userId = (req.session as any).userId;
+    if (!userId) return res.sendStatus(401);
+
+    try {
+      const user = await storage.updateUser(userId, req.body);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      res.json({ id: user.id, email: user.email, name: user.name });
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  // Dashboard Route
+  app.get("/api/dashboard", async (req, res) => {
+    if (!(req.session as any).userId) {
+      return res.status(401).send("Unauthorized");
+    }
+    try {
+      const data = await storage.getDashboardData();
+      res.json(data);
+    } catch (error: any) {
+      console.error("Error fetching dashboard data:", error);
+      res
+        .status(500)
+        .json({ message: error.message || "Internal server error" });
+    }
+  });
+
+  // Customer Routes
+  app.get("/api/customers", async (req, res) => {
+    try {
+      const customers = await (storage as any).getCustomers();
+      res.json(customers);
+    } catch (error: any) {
+      console.error("Error fetching customers:", error);
+      res
+        .status(500)
+        .json({ message: error.message || "Internal server error" });
+    }
+  });
+
+  app.get("/api/customers/by-phone/:phone", async (req, res) => {
+    try {
+      const { phone } = req.params;
+      const customerData = await (storage as any).getJobCardsByPhone(phone);
+      if (customerData) {
+        res.json(customerData);
+      } else {
+        res.status(404).json({ message: "Customer not found" });
+      }
+    } catch (error: any) {
+      console.error("Error fetching customer by phone:", error);
+      res.status(500).json({ message: error.message || "Internal server error" });
+    }
+  });
+
+  // Masters Routes
+  app.get(api.masters.services.list.path, async (req, res) => {
+    const services = await storage.getServices();
+    res.json(services);
+  });
+
+  app.post(api.masters.services.create.path, async (req, res) => {
+    try {
+      const input = api.masters.services.create.input.parse(req.body);
+      const service = await storage.createService(input);
+      res.status(201).json(service);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.patch("/api/masters/services/:id", async (req, res) => {
+    try {
+      const service = await storage.updateService(req.params.id, req.body);
+      if (!service)
+        return res.status(404).json({ message: "Service not found" });
+      res.json(service);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/masters/services/:id", async (req, res) => {
+    const success = await storage.deleteService(req.params.id);
+    if (!success) return res.status(404).json({ message: "Service not found" });
+    res.json({ message: "Service deleted" });
+  });
+
+  app.get(api.masters.ppf.list.path, async (req, res) => {
+    const ppfs = await storage.getPPFs();
+    res.json(ppfs);
+  });
+
+  app.post(api.masters.ppf.create.path, async (req, res) => {
+    try {
+      const ppf = await storage.createPPF(req.body);
+      res.status(201).json(ppf);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.patch("/api/masters/ppf/:id", async (req, res) => {
+    try {
+      const ppf = await storage.updatePPF(req.params.id, req.body);
+      if (!ppf) return res.status(404).json({ message: "PPF not found" });
+      res.json(ppf);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/masters/ppf/:id", async (req, res) => {
+    const success = await storage.deletePPF(req.params.id);
+    if (!success) return res.status(404).json({ message: "PPF not found" });
+    res.json({ message: "PPF deleted" });
+  });
+
+  app.get(api.masters.accessories.list.path, async (req, res) => {
+    const accessories = await storage.getAccessories();
+    res.json(accessories);
+  });
+
+  app.post(api.masters.accessories.create.path, async (req, res) => {
+    try {
+      const accessory = await storage.createAccessory(req.body);
+      res.status(201).json(accessory);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.get(api.masters.accessories.categories.list.path, async (req, res) => {
+    const categories = await storage.getAccessoryCategories();
+    res.json(categories);
+  });
+
+  app.post(api.masters.accessories.categories.create.path, async (req, res) => {
+    try {
+      const { name } = api.masters.accessories.categories.create.input.parse(
+        req.body,
+      );
+      const category = await storage.createAccessoryCategory(name);
+      res.status(201).json(category);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.patch("/api/masters/accessory-categories/:id", async (req, res) => {
+    try {
+      const category = await storage.updateAccessoryCategory(
+        req.params.id,
+        req.body.name,
+      );
+      if (!category)
+        return res.status(404).json({ message: "Category not found" });
+      res.json(category);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/masters/accessory-categories/:id", async (req, res) => {
+    const success = await storage.deleteAccessoryCategory(req.params.id);
+    if (!success)
+      return res.status(404).json({ message: "Category not found" });
+    res.json({ message: "Category deleted" });
+  });
+
+  app.patch("/api/masters/accessories/:id", async (req, res) => {
+    try {
+      const accessory = await storage.updateAccessory(req.params.id, req.body);
+      if (!accessory)
+        return res.status(404).json({ message: "Accessory not found" });
+      res.json(accessory);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/masters/accessories/:id", async (req, res) => {
+    const success = await storage.deleteAccessory(req.params.id);
+    if (!success)
+      return res.status(404).json({ message: "Accessory not found" });
+    res.json({ message: "Accessory deleted" });
+  });
+
+  app.get(api.masters.vehicleTypes.list.path, async (req, res) => {
+    const types = await storage.getVehicleTypes();
+    res.json(types);
+  });
+
+  app.post(api.masters.vehicleTypes.create.path, async (req, res) => {
+    try {
+      const { name } = api.masters.vehicleTypes.create.input.parse(req.body);
+      const type = await storage.createVehicleType(name);
+      res.status(201).json(type);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  // Technician Routes
+  app.get(api.technicians.list.path, async (req, res) => {
+    const technicians = await storage.getTechnicians();
+    res.json(technicians);
+  });
+
+  app.post(api.technicians.create.path, async (req, res) => {
+    try {
+      const input = api.technicians.create.input.parse(req.body);
+      const technician = await storage.createTechnician(input);
+      res.status(201).json(technician);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.patch("/api/technicians/:id", async (req, res) => {
+    try {
+      const technician = await storage.updateTechnician(
+        req.params.id,
+        req.body,
+      );
+      if (!technician)
+        return res.status(404).json({ message: "Technician not found" });
+      res.json(technician);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/technicians/:id", async (req, res) => {
+    const success = await storage.deleteTechnician(req.params.id);
+    if (!success)
+      return res.status(404).json({ message: "Technician not found" });
+    res.json({ message: "Technician deleted" });
+  });
+
+  // Appointment Routes
+  app.get(api.appointments.list.path, async (req, res) => {
+    const appointments = await storage.getAppointments();
+    res.json(appointments);
+  });
+
+  app.post(api.appointments.create.path, async (req, res) => {
+    try {
+      const input = api.appointments.create.input.parse(req.body);
+      const appointment = await storage.createAppointment(input);
+      res.status(201).json(appointment);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.patch("/api/appointments/:id", async (req, res) => {
+    try {
+      const appointment = await storage.updateAppointment(
+        req.params.id,
+        req.body,
+      );
+      if (!appointment)
+        return res.status(404).json({ message: "Appointment not found" });
+      res.json(appointment);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/appointments/:id", async (req, res) => {
+    const success = await storage.deleteAppointment(req.params.id);
+    if (!success)
+      return res.status(404).json({ message: "Appointment not found" });
+    res.json({ message: "Appointment deleted" });
+  });
+
+  // Job Cards Routes
+  app.get("/api/job-cards", async (req, res) => {
+    const jobs = await storage.getJobCards();
+    res.json(jobs);
+  });
+
+  // Tickets
+  app.get("/api/tickets", async (req, res) => {
+    if (!(req.session as any).userId) return res.sendStatus(401);
+    const tickets = await storage.getTickets();
+    res.json(tickets);
+  });
+
+  app.post("/api/tickets", async (req, res) => {
+    if (!(req.session as any).userId) return res.sendStatus(401);
+    const ticket = await storage.createTicket(req.body);
+    res.json(ticket);
+  });
+
+  app.patch("/api/tickets/:id", async (req, res) => {
+    if (!(req.session as any).userId) return res.sendStatus(401);
+    const ticket = await storage.updateTicket(req.params.id, req.body);
+    if (!ticket) return res.sendStatus(404);
+    res.json(ticket);
+  });
+
+  app.delete("/api/tickets/:id", async (req, res) => {
+    if (!(req.session as any).userId) return res.sendStatus(401);
+    await storage.deleteTicket(req.params.id);
+    res.sendStatus(204);
+  });
+
+  // Old Customers
+  app.get("/api/old-customers", async (req, res) => {
+    if (!(req.session as any).userId) return res.sendStatus(401);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const data = await storage.getOldCustomers(page, limit);
+    res.json(data);
+  });
+
+  app.post("/api/old-customers", async (req, res) => {
+    if (!(req.session as any).userId) return res.sendStatus(401);
+    const customer = await storage.createOldCustomer(req.body);
+    res.json(customer);
+  });
+
+  app.get("/api/job-cards/:id", async (req, res) => {
+    const job = await storage.getJobCard(req.params.id);
+    if (!job) return res.status(404).json({ message: "Job card not found" });
+    res.json(job);
+  });
+
+  app.post("/api/invoices", async (req, res) => {
+    if (!(req.session as any).userId) {
+      return res.status(401).send("Unauthorized");
+    }
+    try {
+      const invoice = await storage.createInvoice(req.body);
+      res.status(201).json(invoice);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Invalid input" });
+    }
+  });
+
+  app.get("/api/invoices", async (req, res) => {
+    if (!(req.session as any).userId) {
+      return res.status(401).send("Unauthorized");
+    }
+    const phone = req.query.phone as string;
+    if (phone) {
+      const invoices = await storage.getInvoicesByPhone(phone);
+      return res.json(invoices);
+    }
+    const invoices = await storage.getInvoices();
+    res.json(invoices);
+  });
+
+  app.get("/api/invoices/:id", async (req, res) => {
+    if (!(req.session as any).userId) {
+      return res.status(401).send("Unauthorized");
+    }
+    const invoice = await storage.getInvoice(req.params.id);
+    if (!invoice) return res.status(404).json({ message: "Invoice not found" });
+    res.json(invoice);
+  });
+
+  app.patch("/api/invoices/:id", async (req, res) => {
+    if (!(req.session as any).userId) {
+      return res.status(401).send("Unauthorized");
+    }
+    try {
+      const invoice = await storage.updateInvoice(req.params.id, req.body);
+      if (!invoice)
+        return res.status(404).json({ message: "Invoice not found" });
+      res.json(invoice);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Invalid input" });
+    }
+  });
+
+  app.delete("/api/invoices/:id", async (req, res) => {
+    if (!(req.session as any).userId) {
+      return res.status(401).send("Unauthorized");
+    }
+    console.log(`[DELETE INVOICE ROUTE] ID: ${req.params.id}`);
+    try {
+      const success = await storage.deleteInvoice(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+      res.json({ message: "Invoice deleted" });
+    } catch (error: any) {
+      console.error("[DELETE INVOICE ERROR]", error);
+      res.status(500).json({ message: error.message || "Internal server error" });
+    }
+  });
+
+  app.post("/api/job-cards", async (req, res) => {
+    const job = await storage.createJobCard(req.body);
+    res.json(job);
+  });
+
+  app.post("/api/debug/reset-balances", async (req, res) => {
+    if (!(req.session as any).userId) return res.sendStatus(401);
+    try {
+      await mongoose
+        .model("Invoice")
+        .updateMany({}, { $set: { payments: [], isPaid: false } });
+      res.json({ message: "All balances reset to zero (payments cleared)" });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/job-cards/:id", async (req, res) => {
+    try {
+      console.log("Updating job card:", req.params.id, req.body);
+      const job = await storage.updateJobCard(req.params.id, req.body);
+      if (!job) return res.status(404).json({ message: "Job card not found" });
+      res.json(job);
+    } catch (error: any) {
+      console.error("Error updating job card:", error);
+      res.status(400).json({ message: error.message || "Invalid input" });
+    }
+  });
+
+  app.delete("/api/job-cards/:id", async (req, res) => {
+    const success = await storage.deleteJobCard(req.params.id);
+    if (!success)
+      return res.status(404).json({ message: "Job card not found" });
+    res.json({ message: "Job card deleted" });
+  });
+
+  // Inquiry Routes
+  app.get("/api/inquiries", async (req, res) => {
+    const phone = req.query.phone as string;
+    if (phone) {
+      const inquiries = await storage.getInquiriesByPhone(phone);
+      return res.json(inquiries);
+    }
+    const inquiries = await storage.getInquiries();
+    res.json(inquiries);
+  });
+
+  app.post("/api/inquiries", async (req, res) => {
+    try {
+      const inquiry = await storage.createInquiry(req.body);
+      res.status(201).json(inquiry);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/inquiries/:id", async (req, res) => {
+    const success = await storage.deleteInquiry(req.params.id);
+    if (!success) return res.status(404).json({ message: "Inquiry not found" });
+    res.json({ message: "Inquiry deleted" });
+  });
+
+  // Vendor Management Routes
+  app.get("/api/vendors", async (req, res) => {
+    const vendors = await storage.getVendors();
+    res.json(vendors);
+  });
+
+  app.get("/api/vendors/:id", async (req, res) => {
+    const vendor = await storage.getVendor(req.params.id);
+    if (!vendor) return res.status(404).json({ message: "Vendor not found" });
+    res.json(vendor);
+  });
+
+  app.post("/api/vendors", async (req, res) => {
+    try {
+      const vendor = await storage.createVendor(req.body);
+      res.status(201).json(vendor);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.patch("/api/vendors/:id", async (req, res) => {
+    try {
+      const vendor = await storage.updateVendor(req.params.id, req.body);
+      if (!vendor) return res.status(404).json({ message: "Vendor not found" });
+      res.json(vendor);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/vendors/:id", async (req, res) => {
+    const success = await storage.deleteVendor(req.params.id);
+    if (!success) return res.status(404).json({ message: "Vendor not found" });
+    res.json({ message: "Vendor deleted" });
+  });
+
+  // Vendor Purchase Routes
+  app.get("/api/vendor-purchases", async (req, res) => {
+    const vendorId = req.query.vendorId as string | undefined;
+    const purchases = await storage.getVendorPurchases(vendorId);
+    res.json(purchases);
+  });
+
+  app.get("/api/vendor-purchases/:id", async (req, res) => {
+    const purchase = await storage.getVendorPurchase(req.params.id);
+    if (!purchase) return res.status(404).json({ message: "Purchase not found" });
+    res.json(purchase);
+  });
+
+  async function syncPurchaseItemsToMasters(items: any[]) {
+    if (!items || !Array.isArray(items)) return;
+    const [existingPPFs, existingAccessories, existingCategories] = await Promise.all([
+      storage.getPPFs(),
+      storage.getAccessories(),
+      storage.getAccessoryCategories(),
+    ]);
+
+    const ppfByName = new Map(existingPPFs.map(p => [p.name.trim().toLowerCase(), p]));
+    const categoryNames = new Set(existingCategories.map(c => c.name.trim().toLowerCase()));
+    const accessoryKeys = new Set(existingAccessories.map(a => `${a.category.trim().toLowerCase()}::${a.name.trim().toLowerCase()}`));
+
+    for (const item of items) {
+      if (!item.name || !item.name.trim()) continue;
+      const itemName = item.name.trim();
+
+      if (item.itemType === "PPF") {
+        const rollName = (item.rollName || "").trim() || `Roll ${new Date().toLocaleDateString("en-IN")}`;
+        const rollStock = Number(item.quantity) || 0;
+        const newRoll = { name: rollName, stock: rollStock };
+        const ppfPricing = Array.isArray(item.ppfPricing) ? item.ppfPricing : [];
+
+        const existingPPF = ppfByName.get(itemName.toLowerCase());
+        if (!existingPPF) {
+          const created = await storage.createPPF({
+            name: itemName,
+            pricingByVehicleType: ppfPricing,
+            rolls: [newRoll],
+          });
+          ppfByName.set(itemName.toLowerCase(), created);
+        } else if (existingPPF.id) {
+          const existingRolls = existingPPF.rolls || [];
+          const updatedPPF = await storage.updatePPF(existingPPF.id, {
+            ...existingPPF,
+            rolls: [...existingRolls, newRoll],
+          });
+          if (updatedPPF) ppfByName.set(itemName.toLowerCase(), updatedPPF);
+        }
+      } else if (item.itemType === "Accessory") {
+        const catName = (item.categoryName || "").trim();
+        if (!catName) continue;
+
+        if (!categoryNames.has(catName.toLowerCase())) {
+          await storage.createAccessoryCategory(catName);
+          categoryNames.add(catName.toLowerCase());
+        }
+
+        const accKey = `${catName.toLowerCase()}::${itemName.toLowerCase()}`;
+        if (!accessoryKeys.has(accKey)) {
+          await storage.createAccessory({
+            category: catName,
+            name: itemName,
+            quantity: 0,
+            price: Number(item.unitPrice) || 0,
+          });
+          accessoryKeys.add(accKey);
+        }
+      }
+    }
+  }
+
+  app.post("/api/vendor-purchases", async (req, res) => {
+    try {
+      const purchase = await storage.createVendorPurchase(req.body);
+      await syncPurchaseItemsToMasters(req.body.items);
+      res.status(201).json(purchase);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.patch("/api/vendor-purchases/:id", async (req, res) => {
+    try {
+      const purchase = await storage.updateVendorPurchase(req.params.id, req.body);
+      if (!purchase) return res.status(404).json({ message: "Purchase not found" });
+      await syncPurchaseItemsToMasters(req.body.items);
+      res.json(purchase);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.delete("/api/vendor-purchases/:id", async (req, res) => {
+    const success = await storage.deleteVendorPurchase(req.params.id);
+    if (!success) return res.status(404).json({ message: "Purchase not found" });
+    res.json({ message: "Purchase deleted" });
+  });
+
+  // Seed default user if not exists
+  if (mongoose.connection.readyState === 1) {
+    const defaultEmail = "abhishek@autogamma.in";
+    const existing = await storage.getUserByEmail(defaultEmail);
+    if (!existing) {
+      await storage.createUser({
+        email: defaultEmail,
+        password: "Abhishek@132231", // Matches the dummy login in screenshot roughly
+      });
+      console.log("Seeded default user:", defaultEmail);
+    }
+  } else {
+    console.warn("MongoDB not connected, skipping seed.");
+  }
+
+  return httpServer;
+}

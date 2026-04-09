@@ -1,0 +1,73 @@
+root@srv1243312:/var/www/AutogammanewsoftwareV5# pm2 list
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ autogarage-crm     │ fork     │ 0    │ online    │ 0%       │ 95.9mb   │
+│ 1  │ autogarage-crmnew  │ fork     │ 3    │ online    │ 0%       │ 99.3mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root@srv1243312:/var/www/AutogammanewsoftwareV5# pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/root/.pm2/pm2.log last 15 lines:
+PM2        | 2026-02-03T17:38:43: PM2 log: Stopping app:autogarage-crmnew id:1
+PM2        | 2026-02-03T17:38:43: PM2 log: App [autogarage-crmnew:1] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-03T17:38:43: PM2 log: pid=1071 msg=process killed
+PM2        | 2026-02-03T17:38:43: PM2 log: App [autogarage-crmnew:1] starting in -fork mode-
+PM2        | 2026-02-03T17:38:43: PM2 log: App [autogarage-crmnew:1] online
+PM2        | 2026-02-03T17:52:35: PM2 log: Stopping app:autogarage-crmnew id:1
+PM2        | 2026-02-03T17:52:35: PM2 log: App [autogarage-crmnew:1] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-03T17:52:35: PM2 log: pid=2202 msg=process killed
+PM2        | 2026-02-03T17:52:35: PM2 log: App [autogarage-crmnew:1] starting in -fork mode-
+PM2        | 2026-02-03T17:52:35: PM2 log: App [autogarage-crmnew:1] online
+PM2        | 2026-02-03T17:58:36: PM2 log: Stopping app:autogarage-crmnew id:1
+PM2        | 2026-02-03T17:58:36: PM2 log: App [autogarage-crmnew:1] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-03T17:58:36: PM2 log: pid=2403 msg=process killed
+PM2        | 2026-02-03T17:58:36: PM2 log: App [autogarage-crmnew:1] starting in -fork mode-
+PM2        | 2026-02-03T17:58:36: PM2 log: App [autogarage-crmnew:1] online
+
+/root/.pm2/logs/autogarage-crm-error.log last 15 lines:
+0|autogara |         at async model.validateBeforeSave (/var/www/AutogamaSoftwareV5-new-changes-/node_modules/mongoose/lib/plugins/validateBeforeSave.js:34:7)
+0|autogara |         at async Kareem.execPre (/var/www/AutogamaSoftwareV5-new-changes-/node_modules/kareem/index.js:65:24)
+0|autogara |         at async model.$__save (/var/www/AutogamaSoftwareV5-new-changes-/node_modules/mongoose/lib/model.js:369:5)
+0|autogara |         at async model.save (/var/www/AutogamaSoftwareV5-new-changes-/node_modules/mongoose/lib/model.js:609:5)
+0|autogara |         at async /var/www/AutogamaSoftwareV5-new-changes-/dist/index.cjs:63:44447 {
+0|autogara |       properties: [Object],
+0|autogara |       kind: 'required',
+0|autogara |       path: 'service',
+0|autogara |       value: '',
+0|autogara |       reason: undefined,
+0|autogara |       [Symbol(mongoose#validatorError)]: true
+0|autogara |     }
+0|autogara |   },
+0|autogara |   _message: 'PriceInquiry validation failed'
+0|autogara | }
+
+/root/.pm2/logs/autogarage-crm-out.log last 15 lines:
+0|autogara | 5:16:14 PM [express] GET /api/appointments 304 in 7ms
+0|autogara | 5:16:14 PM [express] GET /api/jobs 304 in 13ms
+0|autogara | 5:16:14 PM [express] GET /api/dashboard 304 in 13ms
+0|autogara | 5:16:14 PM [express] GET /api/inventory 304 in 15ms
+0|autogara | 5:16:14 PM [express] GET /api/price-inquiries 304 in 36ms
+0|autogara | 5:16:14 PM [express] GET /api/customers 304 in 42ms
+0|autogara | 5:16:14 PM [express] GET /api/invoices 304 in 22ms
+0|autogara | 5:16:14 PM [express] GET /api/appointments 304 in 8ms
+0|autogara | 5:16:15 PM [express] GET /api/jobs 304 in 11ms
+0|autogara | 5:16:15 PM [express] GET /api/dashboard 304 in 14ms
+0|autogara | 5:16:15 PM [express] GET /api/price-inquiries 304 in 5ms
+0|autogara | 5:16:15 PM [express] GET /api/inventory 304 in 6ms
+0|autogara | 5:16:15 PM [express] GET /api/customers 304 in 7ms
+0|autogara | 5:16:15 PM [express] GET /api/appointments 304 in 4ms
+0|autogara | 5:16:15 PM [express] GET /api/invoices 304 in 4ms
+
+/root/.pm2/logs/autogarage-crmnew-error.log last 15 lines:
+1|autogara | Error: ENOENT: no such file or directory, stat '/var/www/AutogammanewsoftwareV5/dist/public/index.html'
+1|autogara | Error: ENOENT: no such file or directory, stat '/var/www/AutogammanewsoftwareV5/dist/public/index.html'
+
+/root/.pm2/logs/autogarage-crmnew-out.log last 15 lines:
+1|autogara | – 9H","pricingByVehicleType":[{"vehicleType":"Small Cars","price":11000,"_id":"6980e47c006f71086763dd61"},{"vehicleType":"Hatchback / Small Sedan","price":12500,"_id":"6980e47c006f71086763dd62"},{"vehicleType":"Mid-size Sedan / Compact SUV / MUV","price":15000,"_id":"6980e47c006f71086763dd63"},{"vehicleType":"SUV / MPV","price":18000,"_id":"6980e47c006f71086763dd64"}]}]
+1|autogara | 6:08:38 PM [express] GET /api/masters/ppf 304 in 8ms :: [{"id":"6980e5e8006f71086763dd6b","name":"PPF - Elite","pricingByVehicleType":[{"vehicleType":"Small Cars","options":[{"warrantyName":"TPU 5 Years Gloss","price":55000,"_id":"6980e5e8006f71086763dd6d"},{"warrantyName":"TPU 5 Years Matt","price":60000,"_id":"6980e5e8006f71086763dd6e"},{"warrantyName":"TPU 7 Years Gloss","price":80000,"_id":"6980e5e8006f71086763dd6f"},{"warrantyName":"TPU 10 Years Gloss","price":95000,"_id":"6980e5e8006f71086763dd70"}],"_id":"6980e5e8006f71086763dd6c"},{"vehicleType":"Hatchback / Small Sedan","options":[{"warrantyName":"TPU 5 Years Gloss","price":60000,"_id":"6980e5e8006f71086763dd72"},{"warrantyName":"TPU 5 Years Matt","price":70000,"_id":"6980e5e8006f71086763dd73"},{"warrantyName":"TPU 7 Years Gloss","price":85000,"_id":"6980e5e8006f71086763dd74"},{"warrantyName":"TPU 10 Years Gloss","price":105000,"_id":"6980e5e8006f71086763dd75"}],"_id":"6980e5e8006f71086763dd71"},{"vehicleType":"Mid-size Sedan / Compact SUV / MUV","options":[{"warrantyName":"TPU 5 Years Gloss","price":70000,"_id":"6980e5e8006f71086763dd77"},{"warrantyName":"TPU 5 Years Matt","price":75000,"_id":"6980e5e8006f71086763dd78"},{"warrantyName":"TPU 7 Years Gloss","price":90000,"_id":"6980e5e8006f71086763dd79"},{"warrantyName":"TPU 10 Years Gloss","price":112000,"_id":"6980e5e8006f71086763dd7a"}],"_id":"6980e5e8006f71086763dd76"},{"vehicleType":"SUV / MPV","options":[{"warrantyName":"TPU 5 Years Gloss","price":80000,"_id":"6980e5e8006f71086763dd7c"},{"warrantyName":"TPU 5 Years Matt","price":85000,"_id":"6980e5e8006f71086763dd7d"},{"warrantyName":"TPU 7 Years Gloss","price":95000,"_id":"6980e5e8006f71086763dd7e"},{"warrantyName":"TPU 10 Years Gloss","price":120000,"_id":"6980e5e8006f71086763dd7f"}],"_id":"6980e5e8006f71086763dd7b"}],"rolls":[{"name":"Roll1","stock":9900,"_id":"6980e5e8006f71086763dd80"}]}]
+1|autogara | 6:08:38 PM [express] GET /api/masters/vehicle-types 304 in 3ms :: [{"id":"6980e41a006f71086763dd54","name":"Small Cars"},{"id":"6980e424006f71086763dd57","name":"Hatchback / Small Sedan"},{"id":"6980e42d006f71086763dd5a","name":"Mid-size Sedan / Compact SUV / MUV"},{"id":"6980e434006f71086763dd5d","name":"SUV / MPV"}]
+1|autogara | 6:08:38 PM [express] GET /api/masters/accessory-categories 304 in 9ms :: [{"id":"6980e604006f71086763dd98","name":"Matting"}]
+1|autogara | 6:08:38 PM [express] GET /api/masters/accessories 304 in 6ms :: [{"id":"6980e618006f71086763dd9b","category":"Matting","name":"AutoTech 7D Matts BE6","quantity":100,"price":6500}]
+1|autogara | 6:08:40 PM [express] GET /api/invoices 401 in 2ms
+1|autogara | 6:08:46 PM [express] GET /api/technicians 304 in 5ms :: []
+

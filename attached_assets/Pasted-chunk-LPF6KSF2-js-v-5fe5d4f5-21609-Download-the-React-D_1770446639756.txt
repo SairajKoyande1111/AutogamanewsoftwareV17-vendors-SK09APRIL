@@ -1,0 +1,45 @@
+chunk-LPF6KSF2.js?v=5fe5d4f5:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+/api/user:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+/api/login:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)
+add-job.tsx:151 Fetching job for edit, jobId: 6986da171ab4fc9540367c95
+add-job.tsx:168 Job ID effect triggered for 6986da171ab4fc9540367c95 - forcing refetch
+add-job.tsx:155 Fetched job data: Object
+add-job.tsx:177 Resetting form with matched jobToEdit data for jobId: 6986da171ab4fc9540367c95
+chunk-LPF6KSF2.js?v=5fe5d4f5:16718 Uncaught TypeError: Cannot read properties of undefined (reading 'match')
+    at add-job.tsx:198:58
+    at Array.reduce (<anonymous>)
+    at add-job.tsx:196:38
+    at commitHookEffectListMount (chunk-LPF6KSF2.js?v=5fe5d4f5:16963:34)
+    at commitPassiveMountOnFiber (chunk-LPF6KSF2.js?v=5fe5d4f5:18206:19)
+    at commitPassiveMountEffects_complete (chunk-LPF6KSF2.js?v=5fe5d4f5:18179:17)
+    at commitPassiveMountEffects_begin (chunk-LPF6KSF2.js?v=5fe5d4f5:18169:15)
+    at commitPassiveMountEffects (chunk-LPF6KSF2.js?v=5fe5d4f5:18159:11)
+    at flushPassiveEffectsImpl (chunk-LPF6KSF2.js?v=5fe5d4f5:19543:11)
+    at flushPassiveEffects (chunk-LPF6KSF2.js?v=5fe5d4f5:19500:22)
+chunk-LPF6KSF2.js?v=5fe5d4f5:14080 The above error occurred in the <AddJobPage> component:
+
+    at AddJobPage (https://2516906f-8dfd-44a2-af5d-540714529201-00-32clhe9ktiqur.spock.replit.dev/src/pages/add-job.tsx:91:27)
+    at ProtectedRoute (https://2516906f-8dfd-44a2-af5d-540714529201-00-32clhe9ktiqur.spock.replit.dev/src/App.tsx:38:38)
+    at Route (https://2516906f-8dfd-44a2-af5d-540714529201-00-32clhe9ktiqur.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5fe5d4f5:322:16)
+    at Switch (https://2516906f-8dfd-44a2-af5d-540714529201-00-32clhe9ktiqur.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5fe5d4f5:378:17)
+    at Router
+    at Provider (https://2516906f-8dfd-44a2-af5d-540714529201-00-32clhe9ktiqur.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-TACGZKHJ.js?v=5fe5d4f5:47:15)
+    at TooltipProvider (https://2516906f-8dfd-44a2-af5d-540714529201-00-32clhe9ktiqur.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=5fe5d4f5:59:5)
+    at QueryClientProvider (https://2516906f-8dfd-44a2-af5d-540714529201-00-32clhe9ktiqur.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=5fe5d4f5:2747:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-LPF6KSF2.js?v=5fe5d4f5:14080
+chunk-LPF6KSF2.js?v=5fe5d4f5:9176 Uncaught TypeError: Cannot read properties of undefined (reading 'match')
+    at add-job.tsx:198:58
+    at Array.reduce (<anonymous>)
+    at add-job.tsx:196:38
+    at commitHookEffectListMount (chunk-LPF6KSF2.js?v=5fe5d4f5:16963:34)
+    at commitPassiveMountOnFiber (chunk-LPF6KSF2.js?v=5fe5d4f5:18206:19)
+    at commitPassiveMountEffects_complete (chunk-LPF6KSF2.js?v=5fe5d4f5:18179:17)
+    at commitPassiveMountEffects_begin (chunk-LPF6KSF2.js?v=5fe5d4f5:18169:15)
+    at commitPassiveMountEffects (chunk-LPF6KSF2.js?v=5fe5d4f5:18159:11)
+    at flushPassiveEffectsImpl (chunk-LPF6KSF2.js?v=5fe5d4f5:19543:11)
+    at flushPassiveEffects (chunk-LPF6KSF2.js?v=5fe5d4f5:19500:22)
+add-job?id=6986da1…:1 Uncaught (in promise) Error: Could not establish connection. Receiving end does not exist.

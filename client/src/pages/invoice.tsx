@@ -1,0 +1,1105 @@
+import { Layout } from "@/components/layout/layout";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Invoice, InvoiceItem } from "@shared/schema";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { FileText, Loader2, Search, Trash2, Eye, ArrowUpDown, Printer, Send, Download } from "lucide-react";
+import * as XLSX from "xlsx";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useParams } from "wouter";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import autoGammaLogo from "@assets/image_1769446487293.png";
+
+const BUSINESS_INFO: Record<string, { name: string; address: string; phone: string; email: string; website: string; logo: string | null }> = {
+  "Auto Gamma": {
+    name: "Auto Gamma",
+    address: "Shop no. 09 & 10, Shreeji Parasio, Prasad Hotel Road, near Panvel Highway, beside Tulsi Aangan Soc, Katrap, Badlapur, Maharashtra 421503",
+    phone: "+91 77380 16768",
+    email: "support@autogamma.in",
+    website: "www.autogamma.in",
+    logo: autoGammaLogo,
+  },
+  "AGNX": {
+    name: "AGNX",
+    address: "Shop no. 09 & 10, Shreeji Parasio, Prasad Hotel Road, near Panvel Highway, beside Tulsi Aangan Soc, Katrap, Badlapur, Maharashtra 421503",
+    phone: "+91 77380 16768",
+    email: "support@autogamma.in",
+    website: "www.autogamma.in",
+    logo: null,
+  }
+};
+
+function InvoiceHeader({ business, invoiceNo, date }: { business: string; invoiceNo: string; date?: string | Date }) {
+  const businessInfo = BUSINESS_INFO[business];
+  
+  return (
+    <div className="flex justify-between items-start border-b-2 border-red-600 pb-6 mb-6">
+      {/* Left Side: Logo/Text and Business Details */}
+      <div className="space-y-3">
+        {business === "AGNX" ? (
+          <div className="h-16 flex items-center">
+            <span className="text-4xl font-black text-red-600 tracking-tighter italic">AGNX</span>
+          </div>
+        ) : (
+          <img src={businessInfo.logo!} alt={businessInfo.name} className="h-16 object-contain" />
+        )}
+        <div className="text-sm text-slate-600 space-y-0.5 max-w-xs">
+          <p><span className="font-semibold text-slate-700">ADDRESS:</span> {businessInfo.address}</p>
+          <p><span className="font-semibold text-slate-700">CONTACT:</span> {businessInfo.phone}</p>
+          <p><span className="font-semibold text-slate-700">MAIL:</span> {businessInfo.email}</p>
+          <p><span className="font-semibold text-slate-700">WEBSITE:</span> {businessInfo.website}</p>
+        </div>
+      </div>
+      
+      {/* Right Side: Invoice Details */}
+      <div className="text-right space-y-2">
+        <p className="text-xs font-bold text-red-600 uppercase tracking-widest">Invoice Details</p>
+        <p className="text-2xl font-bold text-slate-900">#{invoiceNo}</p>
+        <p className="text-slate-600">{format(new Date(date || new Date()), "dd MMM yyyy, hh:mm a")}</p>
+        {business === "Auto Gamma" && (
+          <p className="text-xs font-bold text-slate-700">GST: 27ACEFA1874A1ZS</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InvoiceItemDetails({ item }: { item: InvoiceItem }) {
+  const isPPF = item.type === "PPF";
+  
+  // Extract main name and details from parentheses if they exist
+  let displayName = item.name;
+  const match = item.name.match(/^(.*?)\s*\((.*?)\)([\s\S]*)$/);
+  if (match) {
+    displayName = match[1];
+  }
+
+  // Check for multi-line content (Quantity info added in add-job.tsx)
+  const lines = item.name.split('\n');
+  const quantityLines = lines.slice(1);
+  const headerLine = lines[0];
+
+  // If we have a newline, the header might have the parentheses we want to strip
+  if (lines.length > 1) {
+    const headerMatch = headerLine.match(/^(.*?)\s*\((.*?)\)$/);
+    if (headerMatch) {
+      displayName = headerMatch[1];
+    } else {
+      displayName = headerLine;
+    }
+  }
+
+  return (
+    <div className="space-y-1">
+      <div className="font-bold text-slate-900">{displayName}</div>
+      <div className="text-xs text-slate-500 space-y-0.5 pl-2 border-l-2 border-slate-200">
+        {/* Quantity Info from name (multi-line) */}
+        {quantityLines.map((line, i) => (
+          <div key={i} className="text-slate-600 font-medium">{line.replace(/^[\s,]+/, '')}</div>
+        ))}
+
+        {isPPF && (
+          <>
+            {item.rollUsed && item.rollUsed > 0 && (
+              <div className="font-medium text-slate-700">Total Sq.ft Roll Used: {item.rollUsed} sq.ft</div>
+            )}
+          </>
+        )}
+        
+        {item.type === "Accessory" && (
+          <>
+            {item.category && (
+              <div><span className="font-medium text-slate-700">Category:</span> {item.category}</div>
+            )}
+            {item.quantity && item.quantity > 1 && (
+              <div><span className="font-medium text-slate-700">Quantity:</span> {item.quantity}</div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PrintableInvoice({ invoice }: { invoice: Invoice }) {
+  const businessInfo = BUSINESS_INFO[invoice.business];
+  const gstPercentage = invoice.gstPercentage ?? 0;
+  const halfGst = gstPercentage / 2;
+  const discount = invoice.discount || 0;
+  const laborCharge = invoice.laborCharge || 0;
+  const nonLaborItems = invoice.items.filter(i => i.type !== "Labor");
+  
+  return (
+    <div className="print-invoice bg-white p-8" id="printable-invoice">
+      <InvoiceHeader 
+        business={invoice.business} 
+        invoiceNo={invoice.invoiceNo} 
+        date={invoice.date} 
+      />
+
+
+      {/* Bill To and Vehicle Details */}
+      <div className="grid grid-cols-2 gap-8 mb-6 bg-slate-50 p-4 rounded-lg">
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-red-600 uppercase tracking-widest">Bill To</p>
+          <p className="text-xl font-bold text-slate-900">{invoice.customerName}</p>
+          <p className="text-slate-600">{invoice.phoneNumber}</p>
+          {invoice.emailAddress && <p className="text-slate-600">{invoice.emailAddress}</p>}
+          {invoice.payments && invoice.payments.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-slate-200">
+              <p className="text-xs font-bold text-green-600 uppercase tracking-widest">Payment Status</p>
+              <div className="space-y-3 mt-2">
+                <div className="flex items-center gap-2">
+                  <Badge className={invoice.isPaid ? "bg-green-600 text-white" : "bg-yellow-500 text-white"}>
+                    {invoice.isPaid ? "PAID" : "PARTIAL"}
+                  </Badge>
+                  <span className="text-sm font-bold text-slate-700">₹{invoice.payments?.reduce((acc, p) => acc + (p.amount || 0), 0).toLocaleString()}</span>
+                </div>
+                {invoice.payments && invoice.payments.length > 0 && (
+                  <div className="bg-white border rounded p-2 space-y-2">
+                    {invoice.payments.map((p, i) => (
+                      <div key={i} className="flex justify-between items-center text-xs border-b border-slate-100 pb-1 last:border-0 last:pb-0">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-700">{p.method}</span>
+                          <span className="text-slate-400">{p.date ? format(new Date(p.date), "dd MMM yyyy") : "-"}</span>
+                        </div>
+                        <span className="font-black text-slate-900">₹{(p.amount || 0).toLocaleString()}</span>
+                      </div>
+                    ))}
+                    {invoice.totalAmount - (invoice.payments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0) > 0 && (
+                      <div className="flex justify-between items-center pt-1 border-t border-red-100 text-red-600">
+                        <span className="font-bold uppercase tracking-tighter text-[10px]">Remaining Balance</span>
+                        <span className="font-black">₹{(invoice.totalAmount - (invoice.payments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0)).toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="text-right space-y-2">
+          <p className="text-xs font-bold text-red-600 uppercase tracking-widest">Vehicle Details</p>
+          <div className="text-sm space-y-1">
+            <p className="text-slate-600"><span className="font-semibold text-slate-700">Make / Model:</span> {invoice.vehicleMake || "-"} {invoice.vehicleModel || ""}</p>
+            <p className="text-slate-600"><span className="font-semibold text-slate-700">Year:</span> {invoice.vehicleYear || "-"}</p>
+            <p className="text-slate-600"><span className="font-semibold text-slate-700">License Plate:</span> {invoice.licensePlate || "-"}</p>
+            {invoice.vehicleType && <p className="text-slate-600"><span className="font-semibold text-slate-700">Type:</span> {invoice.vehicleType}</p>}
+          </div>
+        </div>
+      </div>
+
+      {/* Service Items Table */}
+      <div className="mb-6">
+        <p className="text-xs font-bold text-red-600 uppercase tracking-widest mb-3">Service Items</p>
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-900 text-white">
+              <TableHead className="text-white font-bold">Sr No.</TableHead>
+              <TableHead className="text-white font-bold">Description</TableHead>
+              <TableHead className="text-white font-bold">Type</TableHead>
+              <TableHead className="text-right text-white font-bold">Rate</TableHead>
+              <TableHead className="text-center text-white font-bold">Qty</TableHead>
+              <TableHead className="text-right text-white font-bold">Amount</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {nonLaborItems.map((item, idx) => (
+              <TableRow key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+                <TableCell className="font-medium text-slate-600">{idx + 1}</TableCell>
+                <TableCell>
+                  <InvoiceItemDetails item={item} />
+                </TableCell>
+                <TableCell>
+                  <Badge 
+                    variant="secondary" 
+                    className="text-[10px] uppercase bg-slate-200 text-slate-700"
+                  >
+                    {item.type}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">₹{item.price.toLocaleString()}</TableCell>
+                <TableCell className="text-center">{item.quantity || 1}</TableCell>
+                <TableCell className="text-right font-bold">
+                  ₹{(item.price * (item.quantity || 1)).toLocaleString()}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Summary Section */}
+      <div className="flex justify-end">
+        <div className="w-full max-w-sm space-y-2 bg-slate-50 p-4 rounded-lg">
+          <div className="flex justify-between text-slate-600 pb-2 border-b border-slate-200">
+            <span className="font-medium">Base Amount</span>
+            <span className="font-bold">₹{(invoice.subtotal - laborCharge).toLocaleString()}</span>
+          </div>
+
+          {laborCharge > 0 && (
+            <div className="flex justify-between text-slate-600 pb-2 border-b border-slate-200">
+              <span className="font-medium">Labor Charges</span>
+              <span className="font-bold">₹{laborCharge.toLocaleString()}</span>
+            </div>
+          )}
+          
+          {discount > 0 && (
+            <div className="flex justify-between text-green-600 pb-2 border-b border-slate-200">
+              <span className="font-medium">Discount</span>
+              <span className="font-bold">(-) ₹{discount.toLocaleString()}</span>
+            </div>
+          )}
+
+          <div className="flex justify-between text-slate-600 pb-2 border-b border-slate-200">
+            <span className="font-medium">SubTotal</span>
+            <span className="font-bold">₹{(invoice.subtotal - (invoice.discount || 0)).toLocaleString()}</span>
+          </div>
+
+          {(() => {
+            const subtotalWithLabor = invoice.subtotal - (invoice.discount || 0);
+            const gstRate = invoice.gstPercentage ?? 0;
+            const basePrice = subtotalWithLabor / (1 + gstRate / 100);
+            const totalGst = subtotalWithLabor - basePrice;
+            const halfGstAmount = totalGst / 2;
+
+            return (
+              <>
+                {gstRate > 0 && (
+                  <>
+                    <div className="flex justify-between text-slate-600">
+                      <span className="font-medium">(+) SGST: {(gstRate / 2).toFixed(2)}%</span>
+                      <span className="font-bold">₹{Math.round(halfGstAmount).toLocaleString()}</span>
+                    </div>
+
+                    <div className="flex justify-between text-slate-600 pb-2 border-b border-slate-200">
+                      <span className="font-medium">(+) CGST: {(gstRate / 2).toFixed(2)}%</span>
+                      <span className="font-bold">₹{Math.round(halfGstAmount).toLocaleString()}</span>
+                    </div>
+                  </>
+                )}
+              </>
+            );
+          })()}
+
+          <div className="flex justify-between items-center pt-2 text-xl font-black text-red-600">
+            <span className="uppercase tracking-tighter">Grand Total</span>
+            <span>₹{(invoice.subtotal - (invoice.discount || 0)).toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Note */}
+      <div className="mt-8 pt-4 border-t border-slate-200">
+        <p className="text-xs text-slate-500 italic">
+          Please Note: Please be advised that the booking amount mentioned in this invoice is non-refundable. 
+          This amount secures your reservation and cannot be returned in case of cancellation or modification.
+        </p>
+        <div className="mt-6 text-center">
+          <p className="text-lg font-bold text-slate-700">Thank You For Your Business</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Helper function to determine payment status
+function getPaymentStatus(invoice: Invoice): { status: 'Paid' | 'Partial Paid' | 'Unpaid'; paidAmount: number } {
+  const totalAmount = invoice.totalAmount || 0;
+  const payments = invoice.payments || [];
+  const paidAmount = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  
+  if (paidAmount === 0) {
+    return { status: 'Unpaid', paidAmount: 0 };
+  } else if (paidAmount >= totalAmount) {
+    return { status: 'Paid', paidAmount };
+  } else {
+    return { status: 'Partial Paid', paidAmount };
+  }
+}
+
+export default function InvoicePage() {
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [businessFilter, setBusinessFilter] = useState<string>("all");
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Invoice; direction: 'asc' | 'desc' } | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [showPaymentDialog, setShowViewPaymentDialog] = useState(false);
+  const [newPayments, setNewPayments] = useState<{ amount: number | string; method: string; date: string }[]>([
+    { amount: "", method: "Cash", date: new Date().toISOString().split('T')[0] }
+  ]);
+
+  const handleAddPaymentRow = () => {
+    setNewPayments([...newPayments, { amount: "", method: "Cash", date: new Date().toISOString().split('T')[0] }]);
+  };
+
+  const handleRemovePaymentRow = (index: number) => {
+    if (newPayments.length > 1) {
+      setNewPayments(newPayments.filter((_, i) => i !== index));
+    }
+  };
+
+  const handlePaymentRowChange = (index: number, field: string, value: any) => {
+    const updated = [...newPayments];
+    if (field === "amount") {
+      const sanitizedValue = String(value).replace(/[^0-9.]/g, "");
+      updated[index] = { ...updated[index], [field]: sanitizedValue === "" ? "" : sanitizedValue };
+    } else {
+      updated[index] = { ...updated[index], [field]: value };
+    }
+    setNewPayments(updated);
+  };
+
+  const resetPaymentDialog = () => {
+    setNewPayments([{ amount: "", method: "Cash", date: new Date().toISOString().split('T')[0] }]);
+  };
+
+  const updatePaymentMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string, data: { payments: { amount: number; method: string; date: string }[] } }) => {
+      const currentInvoice = invoices.find(inv => inv.id === id);
+      if (!currentInvoice) throw new Error("Invoice not found");
+      
+      const existingPayments = currentInvoice.payments || [];
+      const updatedPayments = [...existingPayments, ...data.payments];
+      const totalPaid = updatedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+      const isFullyPaid = totalPaid >= (currentInvoice.totalAmount || 0);
+
+      await apiRequest("PATCH", `/api/invoices/${id}`, {
+        payments: updatedPayments,
+        isPaid: isFullyPaid
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      toast({ title: "Success", description: "Payment recorded successfully" });
+      setShowViewPaymentDialog(false);
+      resetPaymentDialog();
+    },
+  });
+
+  const { phone: customerPhone } = useParams<{ phone: string }>();
+  const [showViewDialog, setShowViewDialog] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
+    queryKey: ["/api/invoices"],
+  });
+
+  useEffect(() => {
+    if (customerPhone && invoices.length > 0) {
+      const invoice = invoices.find(inv => inv.id === customerPhone);
+      if (invoice) {
+        setSelectedInvoice(invoice);
+        setShowViewDialog(true);
+      }
+    }
+  }, [customerPhone, invoices]);
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/invoices/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/masters/ppf"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      toast({ title: "Success", description: "Invoice deleted successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete invoice",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const filteredInvoices = useMemo(() => {
+    let result = [...invoices];
+
+    // Search
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      result = result.filter(inv => 
+        inv.invoiceNo.toLowerCase().includes(lowerSearch) ||
+        inv.customerName.toLowerCase().includes(lowerSearch) ||
+        inv.phoneNumber.toLowerCase().includes(lowerSearch)
+      );
+    }
+
+    // Filter
+    if (businessFilter !== "all") {
+      result = result.filter(inv => inv.business === businessFilter);
+    }
+
+    // Sort
+    if (sortConfig) {
+      result.sort((a, b) => {
+        const aValue = a[sortConfig.key] ?? "";
+        const bValue = b[sortConfig.key] ?? "";
+        
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return result;
+  }, [invoices, searchTerm, businessFilter, sortConfig]);
+
+  const handleSort = (key: keyof Invoice) => {
+    setSortConfig(prev => {
+      if (prev?.key === key) {
+        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return { key, direction: 'asc' };
+    });
+  };
+
+  const handleView = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setShowViewDialog(true);
+  };
+
+  const handlePrint = () => {
+    const printContent = document.getElementById('printable-invoice');
+    if (printContent) {
+      const originalContents = document.body.innerHTML;
+      document.body.innerHTML = printContent.outerHTML;
+      window.print();
+      document.body.innerHTML = originalContents;
+      window.location.reload();
+    }
+  };
+
+  const downloadExcel = (businessType: "Auto Gamma" | "AGNX") => {
+    console.log(`Starting Excel download for: ${businessType}`);
+    console.log("Total invoices available:", invoices.length);
+    
+    const businessInvoices = invoices.filter(inv => inv.business === businessType);
+    console.log(`Found ${businessInvoices.length} invoices for ${businessType}`);
+    
+    if (businessInvoices.length === 0) {
+      console.warn(`No invoices found for ${businessType}. Filtered from:`, invoices.map(i => i.business));
+      toast({
+        title: "No data",
+        description: `No invoices found for ${businessType}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const excelData = businessInvoices.map(inv => {
+      const serviceDetails = inv.items.map(item => {
+        let details = item.name;
+        if (item.quantity && item.quantity > 1) details += ` (Qty: ${item.quantity})`;
+        if (item.category) details += ` [Cat: ${item.category}]`;
+        if (item.warranty) details += ` [Warranty: ${item.warranty}]`;
+        return details;
+      }).join(", ");
+
+      const { status, paidAmount } = getPaymentStatus(inv);
+
+      return {
+        "Invoice Number": inv.invoiceNo || "N/A",
+        "Date": inv.date ? format(new Date(inv.date), "dd MMM yyyy") : "N/A",
+        "Business Category": inv.business || "N/A",
+        "Customer Name": inv.customerName || "N/A",
+        "Mobile Number": inv.phoneNumber || "N/A",
+        "Service Details": serviceDetails || "No items",
+        "Total Amount": inv.totalAmount || 0,
+        "Paid Amount": paidAmount || 0,
+        "Remaining Balance": (inv.totalAmount || 0) - (paidAmount || 0),
+        "Payment Status": status
+      };
+    });
+
+    console.log("Mapped Excel data sample:", excelData[0]);
+
+    try {
+      // Create worksheet from JSON
+      const worksheet = XLSX.utils.json_to_sheet(excelData);
+      
+      // Explicitly set column widths to something reasonable to avoid "invisible" columns
+      // Using a fixed minimum width of 15 and max of 50
+      const headers = Object.keys(excelData[0]);
+      worksheet["!cols"] = headers.map(() => ({ wch: 20 })); 
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Invoices");
+      
+      console.log("Workbook created, worksheet ref:", worksheet['!ref']);
+      
+      if (!worksheet['!ref']) {
+        throw new Error("Worksheet reference is empty - no data was written");
+      }
+
+      const fileName = `${businessType.replace(/\s+/g, '_')}_Invoices_${format(new Date(), "yyyy-MM-dd")}.xlsx`;
+      
+      // Use writeFile which handles the blob and download automatically
+      XLSX.writeFile(workbook, fileName);
+      
+      console.log("Excel download triggered via writeFile with fixed widths");
+      toast({
+        title: "Success",
+        description: `Excel downloaded for ${businessType}`
+      });
+    } catch (error) {
+      console.error("Excel generation error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate Excel file. Check console for details.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSendWhatsApp = async (invoice: Invoice) => {
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '0';
+    tempDiv.style.width = '800px';
+    document.body.appendChild(tempDiv);
+
+    const root = document.createElement('div');
+    const isAGNX = invoice.business === "AGNX";
+    root.innerHTML = `
+      <div class="print-invoice bg-white p-8" style="width: 800px; font-family: Arial, sans-serif;">
+        <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #dc2626; padding-bottom: 24px; margin-bottom: 24px;">
+          <div>
+            ${isAGNX ? 
+              `<div style="height: 64px; display: flex; align-items: center;">
+                <span style="font-size: 36px; font-weight: 900; color: #dc2626; font-style: italic; letter-spacing: -2px;">AGNX</span>
+              </div>` :
+              `<h2 style="font-size: 24px; font-weight: bold; color: #1e293b;">${invoice.business}</h2>`
+            }
+            <p style="font-size: 12px; color: #64748b; max-width: 300px;">Shop no. 09 & 10, Shreeji Parasio, Prasad Hotel Road, Badlapur, Maharashtra 421503</p>
+            <p style="font-size: 12px; color: #64748b;">Contact: +91 77380 16768</p>
+          </div>
+          <div style="text-align: right;">
+            <p style="font-size: 10px; font-weight: bold; color: #dc2626; text-transform: uppercase;">Invoice Details</p>
+            <p style="font-size: 20px; font-weight: bold; color: #1e293b;">#${invoice.invoiceNo}</p>
+            <p style="color: #64748b;">${format(new Date(invoice.date || new Date()), "dd MMM yyyy")}</p>
+            ${invoice.business === "Auto Gamma" ? `<p style="font-size: 10px; font-weight: bold; color: #334155;">GST: 27ACEFA1874A1ZS</p>` : ""}
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 24px; background: #f8fafc; padding: 16px; border-radius: 8px;">
+          <div>
+            <p style="font-size: 10px; font-weight: bold; color: #dc2626; text-transform: uppercase;">Bill To</p>
+            <p style="font-size: 18px; font-weight: bold; color: #1e293b;">${invoice.customerName}</p>
+            <p style="color: #64748b;">${invoice.phoneNumber}</p>
+          </div>
+          <div style="text-align: right;">
+            <p style="font-size: 10px; font-weight: bold; color: #dc2626; text-transform: uppercase;">Vehicle Details</p>
+            <p style="color: #64748b;">${invoice.vehicleMake || '-'} ${invoice.vehicleModel || ''}</p>
+            <p style="color: #64748b;">License: ${invoice.licensePlate || '-'}</p>
+          </div>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+          <thead>
+            <tr style="background: #1e293b; color: white;">
+              <th style="padding: 12px; text-align: left;">Item</th>
+              <th style="padding: 12px; text-align: right;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${invoice.items.filter(i => i.type !== "Labor").map((item, idx) => `
+              <tr style="background: ${idx % 2 === 0 ? 'white' : '#f8fafc'};">
+                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${item.name}</td>
+                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">₹${(item.price * (item.quantity || 1)).toLocaleString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div style="display: flex; justify-content: flex-end;">
+          <div style="width: 300px; background: #f8fafc; padding: 16px; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+              <span>Subtotal</span>
+              <span style="font-weight: bold;">₹{invoice.subtotal.toLocaleString()}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
+              <span>GST (${invoice.gstPercentage || 18}%)</span>
+              <span style="font-weight: bold;">₹${Math.round(invoice.subtotal - (invoice.subtotal / (1 + (invoice.gstPercentage || 18) / 100))).toLocaleString()}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 18px; font-weight: bold; color: #dc2626;">
+              <span>TOTAL</span>
+              <span>₹${invoice.subtotal.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: center;">
+          <p style="font-size: 16px; font-weight: bold; color: #64748b;">Thank You For Your Business</p>
+        </div>
+      </div>
+    `;
+    tempDiv.appendChild(root);
+
+    try {
+      toast({ title: "Generating PDF...", description: "Please wait while the invoice is being prepared." });
+      
+      const canvas = await html2canvas(root, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Invoice_${invoice.invoiceNo}.pdf`);
+
+      let phoneNumber = invoice.phoneNumber.replace(/\D/g, '');
+      if (phoneNumber.startsWith('0')) {
+        phoneNumber = '91' + phoneNumber.substring(1);
+      } else if (!phoneNumber.startsWith('91')) {
+        phoneNumber = '91' + phoneNumber;
+      }
+
+      const message = encodeURIComponent(
+        `Hello ${invoice.customerName},\n\nPlease find your invoice #${invoice.invoiceNo} for ₹${invoice.subtotal.toLocaleString()}.\n\nThank you for choosing ${invoice.business}!`
+      );
+
+      window.open(`https://web.whatsapp.com/send?phone=${phoneNumber}&text=${message}`, '_blank');
+      
+      toast({ 
+        title: "PDF Downloaded!", 
+        description: "WhatsApp is opening. Please attach the downloaded PDF to send it." 
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({ 
+        title: "Error", 
+        description: "Failed to generate PDF. Please try again.", 
+        variant: "destructive" 
+      });
+    } finally {
+      document.body.removeChild(tempDiv);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Invoices</h1>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4 items-end">
+          <div className="flex-1 space-y-1">
+            <label className="text-xs font-bold text-slate-500 uppercase">Search Invoices</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input 
+                placeholder="Search by invoice no, customer name..." 
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                data-testid="input-search-invoices"
+              />
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => downloadExcel("Auto Gamma")}
+              className="h-10 bg-white border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 gap-2"
+              data-testid="button-download-autogamma"
+            >
+              <Download className="h-4 w-4" />
+              Download Auto Gamma
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => downloadExcel("AGNX")}
+              className="h-10 bg-white border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 gap-2"
+              data-testid="button-download-agnx"
+            >
+              <Download className="h-4 w-4" />
+              Download AGNX
+            </Button>
+          </div>
+
+          <div className="w-full md:w-48 space-y-1">
+            <label className="text-xs font-bold text-slate-500 uppercase">Business Filter</label>
+            <Select value={businessFilter} onValueChange={setBusinessFilter}>
+              <SelectTrigger data-testid="select-business-filter">
+                <SelectValue placeholder="All Businesses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Businesses</SelectItem>
+                <SelectItem value="Auto Gamma">Auto Gamma</SelectItem>
+                <SelectItem value="AGNX">AGNX</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+            <CardTitle>Invoice List</CardTitle>
+            <Badge variant="outline">{filteredInvoices.length} Found</Badge>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="cursor-pointer hover:bg-slate-50" onClick={() => handleSort('invoiceNo')}>
+                    <div className="flex items-center gap-2">
+                      Invoice No <ArrowUpDown className="h-3 w-3" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer hover:bg-slate-50" onClick={() => handleSort('business')}>
+                    <div className="flex items-center gap-2">
+                      Business <ArrowUpDown className="h-3 w-3" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer hover:bg-slate-50" onClick={() => handleSort('customerName')}>
+                    <div className="flex items-center gap-2">
+                      Customer <ArrowUpDown className="h-3 w-3" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer hover:bg-slate-50" onClick={() => handleSort('date')}>
+                    <div className="flex items-center gap-2">
+                      Date <ArrowUpDown className="h-3 w-3" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-right cursor-pointer hover:bg-slate-50" onClick={() => handleSort('totalAmount')}>
+                    <div className="flex items-center gap-2 justify-end">
+                      Total Amount <ArrowUpDown className="h-3 w-3" />
+                    </div>
+                  </TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInvoices.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No invoices found matching your criteria
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredInvoices.map((inv) => (
+                    <TableRow key={inv.id} className="hover:bg-slate-50/50" data-testid={`row-invoice-${inv.id}`}>
+                      <TableCell className="font-medium">{inv.invoiceNo}</TableCell>
+                      <TableCell>
+                        <Badge variant={inv.business === "Auto Gamma" ? "destructive" : "outline"} className={inv.business === "Auto Gamma" ? "bg-red-600" : ""}>
+                          {inv.business}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{inv.customerName}</TableCell>
+                      <TableCell>{format(new Date(inv.date || new Date()), "dd MMM yyyy")}</TableCell>
+                      <TableCell className="text-right font-bold text-red-600">
+                        ₹{inv.totalAmount.toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const { status, paidAmount } = getPaymentStatus(inv);
+                          const badgeColor = status === 'Paid' ? 'bg-green-600' : status === 'Partial Paid' ? 'bg-amber-600' : undefined;
+                          
+                          return (
+                            <div className="space-y-1">
+                              <Badge className={`${badgeColor} text-white hover:opacity-90`}>
+                                {status}
+                              </Badge>
+                              {paidAmount > 0 && (
+                                <div className="text-[10px] text-slate-500">
+                                  Paid: ₹{paidAmount.toLocaleString()} / ₹{inv.totalAmount.toLocaleString()}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {getPaymentStatus(inv).status !== 'Paid' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 text-green-600 border-green-200 hover:bg-green-50"
+                              onClick={() => {
+                                setSelectedInvoice(inv);
+                                setShowViewPaymentDialog(true);
+                              }}
+                            >
+                              Mark Paid
+                            </Button>
+                          )}
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            onClick={() => handleView(inv)} 
+                            className="h-8 w-8"
+                            data-testid={`button-view-invoice-${inv.id}`}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => handleSendWhatsApp(inv)}
+                            data-testid={`button-send-whatsapp-${inv.id}`}
+                            title="Send via WhatsApp"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (inv.id && window.confirm("Are you sure you want to delete this invoice? This will also restore any PPF roll quantities consumed.")) {
+                                deleteMutation.mutate(inv.id);
+                              }
+                            }}
+                            data-testid={`button-delete-invoice-${inv.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
+        <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center justify-between">
+              <span>Invoice Detail</span>
+              <Badge variant={selectedInvoice?.business === "Auto Gamma" ? "destructive" : "outline"} className={selectedInvoice?.business === "Auto Gamma" ? "bg-red-600" : "text-lg px-4 py-1"}>
+                {selectedInvoice?.business}
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedInvoice && (
+            <div ref={printRef}>
+              <PrintableInvoice invoice={selectedInvoice} />
+            </div>
+          )}
+
+          <DialogFooter className="border-t pt-4">
+            <Button variant="outline" onClick={() => setShowViewDialog(false)} data-testid="button-close-invoice">
+              Close
+            </Button>
+            <Button 
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={handlePrint}
+              data-testid="button-print-invoice"
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Print Invoice
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPaymentDialog} onOpenChange={(open) => {
+        setShowViewPaymentDialog(open);
+        if (!open) resetPaymentDialog();
+      }}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Mark Invoice as Paid</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-4">
+              <div className="flex justify-between text-xs text-slate-500 uppercase font-bold mb-1">
+                <span>Total Amount</span>
+                <span>Total Paid</span>
+                <span>Remaining</span>
+              </div>
+              <div className="flex justify-between text-lg font-black">
+                <span className="text-slate-900">₹{selectedInvoice?.totalAmount?.toLocaleString()}</span>
+                <span className="text-green-600">₹{((selectedInvoice?.payments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0) + newPayments.reduce((acc, p) => acc + Number(p.amount || 0), 0)).toLocaleString()}</span>
+                <span className="text-red-600">₹{(selectedInvoice ? Math.max(0, selectedInvoice.totalAmount - (selectedInvoice.payments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0) - newPayments.reduce((acc, p) => acc + Number(p.amount || 0), 0)) : 0).toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-slate-900">Payment Details</h4>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleAddPaymentRow}
+                  className="h-8"
+                  data-testid="button-add-payment-method"
+                >
+                  Add Payment Method
+                </Button>
+              </div>
+
+              {newPayments.map((payment, index) => (
+                <div key={index} className="flex flex-row items-end gap-3 bg-slate-50 p-3 rounded-md relative group">
+                  <div className="flex-1 min-w-[120px]">
+                    <label className="text-[10px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Method</label>
+                    <Select 
+                      value={payment.method} 
+                      onValueChange={(val) => handlePaymentRowChange(index, "method", val)}
+                    >
+                      <SelectTrigger className="h-9" data-testid={`select-payment-method-${index}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Cash">Cash</SelectItem>
+                        <SelectItem value="UPI / GPay">UPI / GPay</SelectItem>
+                        <SelectItem value="Card">Card</SelectItem>
+                        <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex-1 min-w-[120px]">
+                    <label className="text-[10px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Date</label>
+                    <Input
+                      type="date"
+                      value={payment.date}
+                      onChange={(e) => handlePaymentRowChange(index, "date", e.target.value)}
+                      className="h-9"
+                      data-testid={`input-payment-date-${index}`}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-[100px]">
+                    <label className="text-[10px] font-bold text-slate-400 mb-1 block uppercase tracking-wider">Amount</label>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={payment.amount}
+                      onChange={(e) => handlePaymentRowChange(index, "amount", e.target.value)}
+                      placeholder="0"
+                      className="h-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      data-testid={`input-payment-amount-${index}`}
+                    />
+                  </div>
+                  <div className="flex-none">
+                    {newPayments.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemovePaymentRow(index)}
+                        className="h-9 w-9 text-slate-300 hover:text-red-600 hover:bg-red-50"
+                        data-testid={`button-remove-payment-${index}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowViewPaymentDialog(false)} data-testid="button-cancel-payment">Cancel</Button>
+            <Button 
+              className="bg-green-600 hover:bg-green-700 text-white font-bold"
+              data-testid="button-confirm-payment"
+              onClick={() => {
+                if (selectedInvoice?.id) {
+                  const validPayments = newPayments
+                    .filter(p => Number(p.amount) > 0)
+                    .map(p => ({
+                      amount: Number(p.amount),
+                      method: p.method,
+                      date: p.date
+                    }));
+                  
+                  if (validPayments.length === 0) {
+                    toast({ title: "Invalid Amount", description: "Please enter at least one valid payment amount", variant: "destructive" });
+                    return;
+                  }
+                  
+                  const totalNewPayments = validPayments.reduce((sum, p) => sum + p.amount, 0);
+                  const remaining = selectedInvoice.totalAmount - (selectedInvoice.payments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0);
+                  
+                  if (totalNewPayments > remaining + 1) {
+                    toast({ title: "Amount Exceeded", description: `Total amount exceeds remaining balance of ₹${remaining.toLocaleString()}`, variant: "destructive" });
+                    return;
+                  }
+
+                  updatePaymentMutation.mutate({
+                    id: selectedInvoice.id,
+                    data: { payments: validPayments }
+                  });
+                }
+              }}
+              disabled={updatePaymentMutation.isPending || newPayments.every(p => !p.amount || Number(p.amount) <= 0)}
+            >
+              Confirm Payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Print Styles */}
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #printable-invoice, #printable-invoice * {
+            visibility: visible;
+          }
+          #printable-invoice {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 20px;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
+    </Layout>
+  );
+}

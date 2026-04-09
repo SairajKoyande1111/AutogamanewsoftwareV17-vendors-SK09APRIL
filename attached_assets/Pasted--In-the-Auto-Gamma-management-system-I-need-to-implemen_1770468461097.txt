@@ -1,0 +1,40 @@
+```
+In the Auto Gamma management system, I need to implement PPF (Paint Protection Film) roll quantity deduction logic when updating job cards. 
+
+**Current Behavior:**
+- When a job card is updated, the system may create a new invoice if one doesn't already exist for that job card
+- PPF rolls are used from inventory when services are performed
+
+**Required Implementation:**
+
+When a user clicks "Update Job Card":
+
+1. **Check if an invoice exists** for this job card in the invoice section (database):
+   - Query the invoices collection/table to find if there's an active invoice linked to this job card ID
+   - An invoice is considered "existing" only if it's present in the database (not deleted)
+
+2. **If NO invoice exists** (either never created or was deleted):
+   - Deduct the PPF roll quantities used in this job card from their respective roll stocks
+   - For each PPF item in the job card:
+     - Find the roll(s) specified (Roll1, Roll2, etc.)
+     - Deduct the sqft used from the available stock of those specific rolls
+     - Update the roll stock quantities in the database
+   - Then create a new invoice for this job card
+
+3. **If an invoice DOES exist** in the invoice section:
+   - Do NOT deduct any roll quantities (they were already deducted when the invoice was first created)
+   - Only update the job card details and the existing invoice
+
+**Example from the screenshots:**
+- Job card shows: "Garware Elite (Small Cars - TPU 5 Years Gloss) Quantity: 100sqft (from Roll1), Quantity: 100sqft (from Roll2)"
+- If no invoice exists: Deduct 100sqft from Roll1 and 100sqft from Roll2 before creating new invoice
+- If invoice exists: Just update the job card, don't touch roll quantities
+
+**Technical Requirements:**
+- Add a check before the update job card logic to query if an invoice with this job card's ID exists
+- Implement roll quantity deduction function that updates the PPF roll stock in the database
+- Ensure this happens within a transaction to maintain data consistency
+- Handle edge cases where rolls might not have sufficient quantity
+
+Please implement this logic in the job card update functionality.
+```

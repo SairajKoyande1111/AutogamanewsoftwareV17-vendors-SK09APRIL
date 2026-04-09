@@ -1,0 +1,234 @@
+chunk-LPF6KSF2.js?v=3095e21d:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+add-job.tsx:1158 Uncaught ReferenceError: showBusinessDialog is not defined
+    at AddJobPage (add-job.tsx:1158:23)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=3095e21d:11596:26)
+    at mountIndeterminateComponent (chunk-LPF6KSF2.js?v=3095e21d:14974:21)
+    at beginWork (chunk-LPF6KSF2.js?v=3095e21d:15962:22)
+    at HTMLUnknownElement.callCallback2 (chunk-LPF6KSF2.js?v=3095e21d:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-LPF6KSF2.js?v=3095e21d:3705:24)
+    at invokeGuardedCallback (chunk-LPF6KSF2.js?v=3095e21d:3739:39)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=3095e21d:19818:15)
+    at performUnitOfWork (chunk-LPF6KSF2.js?v=3095e21d:19251:20)
+    at workLoopSync (chunk-LPF6KSF2.js?v=3095e21d:19190:13)
+AddJobPage @ add-job.tsx:1158
+renderWithHooks @ chunk-LPF6KSF2.js?v=3095e21d:11596
+mountIndeterminateComponent @ chunk-LPF6KSF2.js?v=3095e21d:14974
+beginWork @ chunk-LPF6KSF2.js?v=3095e21d:15962
+callCallback2 @ chunk-LPF6KSF2.js?v=3095e21d:3680
+invokeGuardedCallbackDev @ chunk-LPF6KSF2.js?v=3095e21d:3705
+invokeGuardedCallback @ chunk-LPF6KSF2.js?v=3095e21d:3739
+beginWork$1 @ chunk-LPF6KSF2.js?v=3095e21d:19818
+performUnitOfWork @ chunk-LPF6KSF2.js?v=3095e21d:19251
+workLoopSync @ chunk-LPF6KSF2.js?v=3095e21d:19190
+renderRootSync @ chunk-LPF6KSF2.js?v=3095e21d:19169
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=3095e21d:18927
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=3095e21d:9166
+(anonymous) @ chunk-LPF6KSF2.js?v=3095e21d:18677
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=3095e21d:537
+flush @ @tanstack_react-query.js?v=3095e21d:551
+batch @ @tanstack_react-query.js?v=3095e21d:569
+#dispatch @ @tanstack_react-query.js?v=3095e21d:963
+setData @ @tanstack_react-query.js?v=3095e21d:672
+onSuccess @ @tanstack_react-query.js?v=3095e21d:865
+resolve @ @tanstack_react-query.js?v=3095e21d:442
+Promise.then
+run @ @tanstack_react-query.js?v=3095e21d:481
+start @ @tanstack_react-query.js?v=3095e21d:518
+fetch @ @tanstack_react-query.js?v=3095e21d:893
+#executeFetch @ @tanstack_react-query.js?v=3095e21d:1963
+onSubscribe @ @tanstack_react-query.js?v=3095e21d:1840
+subscribe @ @tanstack_react-query.js?v=3095e21d:19
+(anonymous) @ @tanstack_react-query.js?v=3095e21d:2962
+subscribeToStore @ chunk-LPF6KSF2.js?v=3095e21d:12032
+commitHookEffectListMount @ chunk-LPF6KSF2.js?v=3095e21d:16963
+commitPassiveMountOnFiber @ chunk-LPF6KSF2.js?v=3095e21d:18206
+commitPassiveMountEffects_complete @ chunk-LPF6KSF2.js?v=3095e21d:18179
+commitPassiveMountEffects_begin @ chunk-LPF6KSF2.js?v=3095e21d:18169
+commitPassiveMountEffects @ chunk-LPF6KSF2.js?v=3095e21d:18159
+flushPassiveEffectsImpl @ chunk-LPF6KSF2.js?v=3095e21d:19543
+flushPassiveEffects @ chunk-LPF6KSF2.js?v=3095e21d:19500
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=3095e21d:18921
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=3095e21d:9166
+commitRootImpl @ chunk-LPF6KSF2.js?v=3095e21d:19485
+commitRoot @ chunk-LPF6KSF2.js?v=3095e21d:19330
+finishConcurrentRender @ chunk-LPF6KSF2.js?v=3095e21d:18858
+performConcurrentWorkOnRoot @ chunk-LPF6KSF2.js?v=3095e21d:18768
+workLoop @ chunk-LPF6KSF2.js?v=3095e21d:197
+flushWork @ chunk-LPF6KSF2.js?v=3095e21d:176
+performWorkUntilDeadline @ chunk-LPF6KSF2.js?v=3095e21d:384
+add-job.tsx:1158 Uncaught ReferenceError: showBusinessDialog is not defined
+    at AddJobPage (add-job.tsx:1158:23)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=3095e21d:11596:26)
+    at mountIndeterminateComponent (chunk-LPF6KSF2.js?v=3095e21d:14974:21)
+    at beginWork (chunk-LPF6KSF2.js?v=3095e21d:15962:22)
+    at HTMLUnknownElement.callCallback2 (chunk-LPF6KSF2.js?v=3095e21d:3680:22)
+    at Object.invokeGuardedCallbackDev (chunk-LPF6KSF2.js?v=3095e21d:3705:24)
+    at invokeGuardedCallback (chunk-LPF6KSF2.js?v=3095e21d:3739:39)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=3095e21d:19818:15)
+    at performUnitOfWork (chunk-LPF6KSF2.js?v=3095e21d:19251:20)
+    at workLoopSync (chunk-LPF6KSF2.js?v=3095e21d:19190:13)
+AddJobPage @ add-job.tsx:1158
+renderWithHooks @ chunk-LPF6KSF2.js?v=3095e21d:11596
+mountIndeterminateComponent @ chunk-LPF6KSF2.js?v=3095e21d:14974
+beginWork @ chunk-LPF6KSF2.js?v=3095e21d:15962
+callCallback2 @ chunk-LPF6KSF2.js?v=3095e21d:3680
+invokeGuardedCallbackDev @ chunk-LPF6KSF2.js?v=3095e21d:3705
+invokeGuardedCallback @ chunk-LPF6KSF2.js?v=3095e21d:3739
+beginWork$1 @ chunk-LPF6KSF2.js?v=3095e21d:19818
+performUnitOfWork @ chunk-LPF6KSF2.js?v=3095e21d:19251
+workLoopSync @ chunk-LPF6KSF2.js?v=3095e21d:19190
+renderRootSync @ chunk-LPF6KSF2.js?v=3095e21d:19169
+recoverFromConcurrentError @ chunk-LPF6KSF2.js?v=3095e21d:18786
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=3095e21d:18932
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=3095e21d:9166
+(anonymous) @ chunk-LPF6KSF2.js?v=3095e21d:18677
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=3095e21d:537
+flush @ @tanstack_react-query.js?v=3095e21d:551
+batch @ @tanstack_react-query.js?v=3095e21d:569
+#dispatch @ @tanstack_react-query.js?v=3095e21d:963
+setData @ @tanstack_react-query.js?v=3095e21d:672
+onSuccess @ @tanstack_react-query.js?v=3095e21d:865
+resolve @ @tanstack_react-query.js?v=3095e21d:442
+Promise.then
+run @ @tanstack_react-query.js?v=3095e21d:481
+start @ @tanstack_react-query.js?v=3095e21d:518
+fetch @ @tanstack_react-query.js?v=3095e21d:893
+#executeFetch @ @tanstack_react-query.js?v=3095e21d:1963
+onSubscribe @ @tanstack_react-query.js?v=3095e21d:1840
+subscribe @ @tanstack_react-query.js?v=3095e21d:19
+(anonymous) @ @tanstack_react-query.js?v=3095e21d:2962
+subscribeToStore @ chunk-LPF6KSF2.js?v=3095e21d:12032
+commitHookEffectListMount @ chunk-LPF6KSF2.js?v=3095e21d:16963
+commitPassiveMountOnFiber @ chunk-LPF6KSF2.js?v=3095e21d:18206
+commitPassiveMountEffects_complete @ chunk-LPF6KSF2.js?v=3095e21d:18179
+commitPassiveMountEffects_begin @ chunk-LPF6KSF2.js?v=3095e21d:18169
+commitPassiveMountEffects @ chunk-LPF6KSF2.js?v=3095e21d:18159
+flushPassiveEffectsImpl @ chunk-LPF6KSF2.js?v=3095e21d:19543
+flushPassiveEffects @ chunk-LPF6KSF2.js?v=3095e21d:19500
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=3095e21d:18921
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=3095e21d:9166
+commitRootImpl @ chunk-LPF6KSF2.js?v=3095e21d:19485
+commitRoot @ chunk-LPF6KSF2.js?v=3095e21d:19330
+finishConcurrentRender @ chunk-LPF6KSF2.js?v=3095e21d:18858
+performConcurrentWorkOnRoot @ chunk-LPF6KSF2.js?v=3095e21d:18768
+workLoop @ chunk-LPF6KSF2.js?v=3095e21d:197
+flushWork @ chunk-LPF6KSF2.js?v=3095e21d:176
+performWorkUntilDeadline @ chunk-LPF6KSF2.js?v=3095e21d:384
+chunk-LPF6KSF2.js?v=3095e21d:14080 The above error occurred in the <AddJobPage> component:
+
+    at AddJobPage (https://b441a78a-b892-4842-91d5-dd517244afc3-00-1u29v7jfroyyf.janeway.replit.dev/src/pages/add-job.tsx:89:27)
+    at ProtectedRoute (https://b441a78a-b892-4842-91d5-dd517244afc3-00-1u29v7jfroyyf.janeway.replit.dev/src/App.tsx:38:38)
+    at Route (https://b441a78a-b892-4842-91d5-dd517244afc3-00-1u29v7jfroyyf.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3095e21d:322:16)
+    at Switch (https://b441a78a-b892-4842-91d5-dd517244afc3-00-1u29v7jfroyyf.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3095e21d:378:17)
+    at Router
+    at Provider (https://b441a78a-b892-4842-91d5-dd517244afc3-00-1u29v7jfroyyf.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-TACGZKHJ.js?v=3095e21d:47:15)
+    at TooltipProvider (https://b441a78a-b892-4842-91d5-dd517244afc3-00-1u29v7jfroyyf.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=3095e21d:59:5)
+    at QueryClientProvider (https://b441a78a-b892-4842-91d5-dd517244afc3-00-1u29v7jfroyyf.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=3095e21d:2747:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-LPF6KSF2.js?v=3095e21d:14080
+update.callback @ chunk-LPF6KSF2.js?v=3095e21d:14100
+callCallback @ chunk-LPF6KSF2.js?v=3095e21d:11296
+commitUpdateQueue @ chunk-LPF6KSF2.js?v=3095e21d:11313
+commitLayoutEffectOnFiber @ chunk-LPF6KSF2.js?v=3095e21d:17141
+commitLayoutMountEffects_complete @ chunk-LPF6KSF2.js?v=3095e21d:18030
+commitLayoutEffects_begin @ chunk-LPF6KSF2.js?v=3095e21d:18019
+commitLayoutEffects @ chunk-LPF6KSF2.js?v=3095e21d:17970
+commitRootImpl @ chunk-LPF6KSF2.js?v=3095e21d:19406
+commitRoot @ chunk-LPF6KSF2.js?v=3095e21d:19330
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=3095e21d:18948
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=3095e21d:9166
+(anonymous) @ chunk-LPF6KSF2.js?v=3095e21d:18677
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=3095e21d:537
+flush @ @tanstack_react-query.js?v=3095e21d:551
+batch @ @tanstack_react-query.js?v=3095e21d:569
+#dispatch @ @tanstack_react-query.js?v=3095e21d:963
+setData @ @tanstack_react-query.js?v=3095e21d:672
+onSuccess @ @tanstack_react-query.js?v=3095e21d:865
+resolve @ @tanstack_react-query.js?v=3095e21d:442
+Promise.then
+run @ @tanstack_react-query.js?v=3095e21d:481
+start @ @tanstack_react-query.js?v=3095e21d:518
+fetch @ @tanstack_react-query.js?v=3095e21d:893
+#executeFetch @ @tanstack_react-query.js?v=3095e21d:1963
+onSubscribe @ @tanstack_react-query.js?v=3095e21d:1840
+subscribe @ @tanstack_react-query.js?v=3095e21d:19
+(anonymous) @ @tanstack_react-query.js?v=3095e21d:2962
+subscribeToStore @ chunk-LPF6KSF2.js?v=3095e21d:12032
+commitHookEffectListMount @ chunk-LPF6KSF2.js?v=3095e21d:16963
+commitPassiveMountOnFiber @ chunk-LPF6KSF2.js?v=3095e21d:18206
+commitPassiveMountEffects_complete @ chunk-LPF6KSF2.js?v=3095e21d:18179
+commitPassiveMountEffects_begin @ chunk-LPF6KSF2.js?v=3095e21d:18169
+commitPassiveMountEffects @ chunk-LPF6KSF2.js?v=3095e21d:18159
+flushPassiveEffectsImpl @ chunk-LPF6KSF2.js?v=3095e21d:19543
+flushPassiveEffects @ chunk-LPF6KSF2.js?v=3095e21d:19500
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=3095e21d:18921
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=3095e21d:9166
+commitRootImpl @ chunk-LPF6KSF2.js?v=3095e21d:19485
+commitRoot @ chunk-LPF6KSF2.js?v=3095e21d:19330
+finishConcurrentRender @ chunk-LPF6KSF2.js?v=3095e21d:18858
+performConcurrentWorkOnRoot @ chunk-LPF6KSF2.js?v=3095e21d:18768
+workLoop @ chunk-LPF6KSF2.js?v=3095e21d:197
+flushWork @ chunk-LPF6KSF2.js?v=3095e21d:176
+performWorkUntilDeadline @ chunk-LPF6KSF2.js?v=3095e21d:384
+chunk-LPF6KSF2.js?v=3095e21d:9176 Uncaught ReferenceError: showBusinessDialog is not defined
+    at AddJobPage (add-job.tsx:1158:23)
+    at renderWithHooks (chunk-LPF6KSF2.js?v=3095e21d:11596:26)
+    at mountIndeterminateComponent (chunk-LPF6KSF2.js?v=3095e21d:14974:21)
+    at beginWork (chunk-LPF6KSF2.js?v=3095e21d:15962:22)
+    at beginWork$1 (chunk-LPF6KSF2.js?v=3095e21d:19806:22)
+    at performUnitOfWork (chunk-LPF6KSF2.js?v=3095e21d:19251:20)
+    at workLoopSync (chunk-LPF6KSF2.js?v=3095e21d:19190:13)
+    at renderRootSync (chunk-LPF6KSF2.js?v=3095e21d:19169:15)
+    at recoverFromConcurrentError (chunk-LPF6KSF2.js?v=3095e21d:18786:28)
+    at performSyncWorkOnRoot (chunk-LPF6KSF2.js?v=3095e21d:18932:28)
+AddJobPage @ add-job.tsx:1158
+renderWithHooks @ chunk-LPF6KSF2.js?v=3095e21d:11596
+mountIndeterminateComponent @ chunk-LPF6KSF2.js?v=3095e21d:14974
+beginWork @ chunk-LPF6KSF2.js?v=3095e21d:15962
+beginWork$1 @ chunk-LPF6KSF2.js?v=3095e21d:19806
+performUnitOfWork @ chunk-LPF6KSF2.js?v=3095e21d:19251
+workLoopSync @ chunk-LPF6KSF2.js?v=3095e21d:19190
+renderRootSync @ chunk-LPF6KSF2.js?v=3095e21d:19169
+recoverFromConcurrentError @ chunk-LPF6KSF2.js?v=3095e21d:18786
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=3095e21d:18932
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=3095e21d:9166
+(anonymous) @ chunk-LPF6KSF2.js?v=3095e21d:18677
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=3095e21d:537
+flush @ @tanstack_react-query.js?v=3095e21d:551
+batch @ @tanstack_react-query.js?v=3095e21d:569
+#dispatch @ @tanstack_react-query.js?v=3095e21d:963
+setData @ @tanstack_react-query.js?v=3095e21d:672
+onSuccess @ @tanstack_react-query.js?v=3095e21d:865
+resolve @ @tanstack_react-query.js?v=3095e21d:442
+Promise.then
+run @ @tanstack_react-query.js?v=3095e21d:481
+start @ @tanstack_react-query.js?v=3095e21d:518
+fetch @ @tanstack_react-query.js?v=3095e21d:893
+#executeFetch @ @tanstack_react-query.js?v=3095e21d:1963
+onSubscribe @ @tanstack_react-query.js?v=3095e21d:1840
+subscribe @ @tanstack_react-query.js?v=3095e21d:19
+(anonymous) @ @tanstack_react-query.js?v=3095e21d:2962
+subscribeToStore @ chunk-LPF6KSF2.js?v=3095e21d:12032
+commitHookEffectListMount @ chunk-LPF6KSF2.js?v=3095e21d:16963
+commitPassiveMountOnFiber @ chunk-LPF6KSF2.js?v=3095e21d:18206
+commitPassiveMountEffects_complete @ chunk-LPF6KSF2.js?v=3095e21d:18179
+commitPassiveMountEffects_begin @ chunk-LPF6KSF2.js?v=3095e21d:18169
+commitPassiveMountEffects @ chunk-LPF6KSF2.js?v=3095e21d:18159
+flushPassiveEffectsImpl @ chunk-LPF6KSF2.js?v=3095e21d:19543
+flushPassiveEffects @ chunk-LPF6KSF2.js?v=3095e21d:19500
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=3095e21d:18921
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=3095e21d:9166
+commitRootImpl @ chunk-LPF6KSF2.js?v=3095e21d:19485
+commitRoot @ chunk-LPF6KSF2.js?v=3095e21d:19330
+finishConcurrentRender @ chunk-LPF6KSF2.js?v=3095e21d:18858
+performConcurrentWorkOnRoot @ chunk-LPF6KSF2.js?v=3095e21d:18768
+workLoop @ chunk-LPF6KSF2.js?v=3095e21d:197
+flushWork @ chunk-LPF6KSF2.js?v=3095e21d:176
+performWorkUntilDeadline @ chunk-LPF6KSF2.js?v=3095e21d:384

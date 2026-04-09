@@ -1,0 +1,62 @@
+In the Auto Gamma management system, I need to implement PPF (Paint Protection Film) roll quantity deduction logic when updating job cards and invoices.
+
+**Required Implementation:**
+
+## 1. JOB CARD UPDATE Logic:
+
+When a user clicks "Update Job Card":
+
+1. **Check if an invoice exists** for this job card in the invoice section (database):
+   - Query the invoices collection/table to find if there's an active invoice linked to this job card ID
+   - An invoice is considered "existing" only if it's present in the database (not deleted)
+
+2. **If NO invoice exists** (either never created or was deleted):
+   - Deduct the PPF roll quantities used in this job card from their respective roll stocks
+   - For each PPF item in the job card:
+     - Find the roll(s) specified (Roll1, Roll2, etc.)
+     - Deduct the sqft used from the available stock of those specific rolls
+     - Update the roll stock quantities in the database
+   - Then create a new invoice for this job card
+
+3. **If an invoice DOES exist** in the invoice section:
+   - Do NOT deduct any roll quantities (they were already deducted when the invoice was first created)
+   - Only update the job card details and the existing invoice
+
+## 2. INVOICE UPDATE Logic (EXCEPTION):
+
+When updating an existing invoice directly from the invoice section:
+
+1. **Always check for newly added rolls** regardless of whether the invoice already exists
+
+2. **Compare the current invoice state with the updated state**:
+   - Identify any NEW rolls that were added during this update
+   - A roll is considered "new" if it wasn't present in the previous version of the invoice
+
+3. **Deduct quantities ONLY for newly added rolls**:
+   - For each newly added roll:
+     - Deduct the sqft used from the available stock of that specific roll
+     - Update the roll stock quantity in the database
+   - Do NOT deduct from rolls that were already present in the invoice before this update
+
+**Example Scenarios:**
+
+**Scenario A - Job Card Update:**
+- Job card shows: "Garware Elite (Small Cars - TPU 5 Years Gloss) Quantity: 100sqft (from Roll1), Quantity: 100sqft (from Roll2)"
+- If no invoice exists: Deduct 100sqft from Roll1 and 100sqft from Roll2 before creating new invoice
+- If invoice exists: Just update the job card, don't touch roll quantities
+
+**Scenario B - Invoice Update (Exception):**
+- Original invoice had: Roll1 (100sqft), Roll2 (100sqft)
+- Updated invoice now has: Roll1 (100sqft), Roll2 (100sqft), Roll3 (50sqft) - NEW
+- Action: Deduct ONLY 50sqft from Roll3 (the newly added roll)
+- Do NOT deduct again from Roll1 or Roll2 as they were already in the invoice
+
+**Technical Requirements:**
+- Add a check in job card update logic to query if an invoice with this job card's ID exists
+- Implement roll quantity deduction function that updates the PPF roll stock in the database
+- In invoice update logic, store the previous state of rolls and compare with new state to identify newly added rolls
+- Ensure this happens within a transaction to maintain data consistency
+- Handle edge cases where rolls might not have sufficient quantity
+- Log all roll deductions for audit purposes
+
+Please implement this logic in both the job card update and invoice update functionalities.

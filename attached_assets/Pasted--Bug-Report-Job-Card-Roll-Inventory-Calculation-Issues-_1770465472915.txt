@@ -1,0 +1,68 @@
+# Bug Report: Job Card Roll Inventory Calculation Issues
+
+## Issue Summary
+There are two critical bugs in the job card/invoice roll inventory management system:
+
+1. **Bug #1 - Edit Job Card Roll Calculation Error**: When updating an existing job card, the system incorrectly adds the total quantity used instead of calculating the delta (difference between old and new quantities). This causes roll inventory to be depleted by more than it should be.
+
+2. **Bug #2 - Delete Invoice Roll Replenishment Error**: When deleting an invoice that was created by editing an existing job card, the roll quantities are not properly restored to the inventory.
+
+## Current Behavior
+
+### Bug #1 - Edit Flow:
+- Initial state: Roll1 = 1000 sqft, Roll2 = 2000 sqft
+- Created new job using 100 sqft from Roll1 + 100 sqft from Roll2 = 200 sqft total
+- After creation: Roll1 = 900 sqft, Roll2 = 1900 sqft ✅ (Correct - decreased by 100 each)
+- When editing the same job card with the same quantities (100 sqft from Roll1 + 100 sqft from Roll2)
+- After update: Roll1 = 1100 sqft, Roll2 = 1900 sqft ❌ (Wrong - Roll1 increased instead of staying at 900)
+
+### Bug #2 - Delete After Edit:
+The roll quantity replenishment after deleting an edited invoice is incorrect because the initial calculation was wrong (as shown in Bug #1).
+
+## Expected Behavior
+
+### For Editing Job Cards:
+- Calculate the **delta** (difference) between old and new quantities
+- Only adjust inventory by the delta amount
+- Example: If old quantity was 100 sqft and new quantity is 150 sqft, only deduct an additional 50 sqft from roll inventory
+
+### For Deleting Invoices:
+- Properly restore the exact quantities that were deducted when the invoice was created
+- Track the original quantities used, not the cumulative incorrect calculations
+
+## Root Cause Analysis
+The edit functionality is likely:
+1. Not retrieving the original quantities used before the update
+2. Adding the entire new quantity to the roll usage instead of calculating (new_qty - old_qty)
+3. This causes double-deduction or incorrect inventory adjustments
+
+## Files to Check
+Please examine these areas in the codebase:
+1. **Job card update/edit endpoint** - Look for where roll quantities are adjusted during updates
+2. **Roll inventory update logic** - The function that increases/decreases roll quantities
+3. **Invoice deletion logic** - Ensure it's using the correct original quantities for restoration
+4. **Database transactions** - Make sure the old values are fetched before the update
+
+## Fix Requirements
+
+### For Job Card Updates:
+1. When updating a job card:
+   - Fetch the current job card's PPF quantities (old quantities) from the database
+   - Calculate delta for each roll: `quantity_to_adjust = new_quantity - old_quantity`
+   - If delta > 0: deduct additional from roll inventory
+   - If delta < 0: add back to roll inventory
+   - If delta = 0: no adjustment needed
+
+### For Invoice Deletion:
+1. When deleting an invoice:
+   - Use the quantities stored with the invoice/job card (not recalculated values)
+   - Add those exact quantities back to the respective rolls
+   - Ensure this works correctly for both newly created and edited invoices
+
+### Additional Requirements:
+1. Add validation to prevent inventory from going negative
+2. Ensure proper transaction handling to maintain data consistency
+3. Log inventory changes for debugging purposes
+
+## Priority
+**HIGH** - This affects inventory accuracy and could lead to incorrect stock levels, impacting business operations.

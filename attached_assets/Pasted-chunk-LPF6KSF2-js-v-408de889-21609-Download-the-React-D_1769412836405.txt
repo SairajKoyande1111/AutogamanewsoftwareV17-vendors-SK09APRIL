@@ -1,0 +1,76 @@
+chunk-LPF6KSF2.js?v=408de889:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+use-auth.ts:15  GET https://21fb916b-81e5-4f84-9557-2a0299365256-00-xkumj6t3qih3.spock.replit.dev/api/user 401 (Unauthorized)
+queryFn @ use-auth.ts:15
+fetchFn @ @tanstack_react-query.js?v=408de889:812
+run @ @tanstack_react-query.js?v=408de889:477
+start @ @tanstack_react-query.js?v=408de889:518
+fetch @ @tanstack_react-query.js?v=408de889:893
+#executeFetch @ @tanstack_react-query.js?v=408de889:1963
+onSubscribe @ @tanstack_react-query.js?v=408de889:1840
+subscribe @ @tanstack_react-query.js?v=408de889:19
+(anonymous) @ @tanstack_react-query.js?v=408de889:2962
+subscribeToStore @ chunk-LPF6KSF2.js?v=408de889:12032
+commitHookEffectListMount @ chunk-LPF6KSF2.js?v=408de889:16963
+commitPassiveMountOnFiber @ chunk-LPF6KSF2.js?v=408de889:18206
+commitPassiveMountEffects_complete @ chunk-LPF6KSF2.js?v=408de889:18179
+commitPassiveMountEffects_begin @ chunk-LPF6KSF2.js?v=408de889:18169
+commitPassiveMountEffects @ chunk-LPF6KSF2.js?v=408de889:18159
+flushPassiveEffectsImpl @ chunk-LPF6KSF2.js?v=408de889:19543
+flushPassiveEffects @ chunk-LPF6KSF2.js?v=408de889:19500
+performSyncWorkOnRoot @ chunk-LPF6KSF2.js?v=408de889:18921
+flushSyncCallbacks @ chunk-LPF6KSF2.js?v=408de889:9166
+commitRootImpl @ chunk-LPF6KSF2.js?v=408de889:19485
+commitRoot @ chunk-LPF6KSF2.js?v=408de889:19330
+finishConcurrentRender @ chunk-LPF6KSF2.js?v=408de889:18858
+performConcurrentWorkOnRoot @ chunk-LPF6KSF2.js?v=408de889:18768
+workLoop @ chunk-LPF6KSF2.js?v=408de889:197
+flushWork @ chunk-LPF6KSF2.js?v=408de889:176
+performWorkUntilDeadline @ chunk-LPF6KSF2.js?v=408de889:384
+add-job.tsx:91 Fetching job for edit, jobId: 69770b29c016cb13ae50a8a6
+add-job.tsx:95 Fetched job data: {_id: '69770b29c016cb13ae50a8a6', jobNo: 'JC-2026-001', customerName: 'Pratik', phoneNumber: '+918975623356', emailAddress: 'raneaniket23@gmail.com', …}
+add-job.tsx:1002 Update button clicked manually
+add-job.tsx:323 Form submitted - Values: {customerName: 'Pratik', phoneNumber: '+918975623356', emailAddress: 'raneaniket23@gmail.com', referralSource: 'Friend/Family', referrerName: 'Andy', …}
+add-job.tsx:326 Starting manual validation...
+add-job.tsx:328 Manual validation result: false
+add-job.tsx:332 Validation failed with errors: {services: Array(1), ppfs: Array(1), accessories: Array(1)}
+onSubmit @ add-job.tsx:332
+await in onSubmit
+onClick @ add-job.tsx:1004
+callCallback2 @ chunk-LPF6KSF2.js?v=408de889:3680
+invokeGuardedCallbackDev @ chunk-LPF6KSF2.js?v=408de889:3705
+invokeGuardedCallback @ chunk-LPF6KSF2.js?v=408de889:3739
+invokeGuardedCallbackAndCatchFirstError @ chunk-LPF6KSF2.js?v=408de889:3742
+executeDispatch @ chunk-LPF6KSF2.js?v=408de889:7046
+processDispatchQueueItemsInOrder @ chunk-LPF6KSF2.js?v=408de889:7066
+processDispatchQueue @ chunk-LPF6KSF2.js?v=408de889:7075
+dispatchEventsForPlugins @ chunk-LPF6KSF2.js?v=408de889:7083
+(anonymous) @ chunk-LPF6KSF2.js?v=408de889:7206
+batchedUpdates$1 @ chunk-LPF6KSF2.js?v=408de889:18966
+batchedUpdates @ chunk-LPF6KSF2.js?v=408de889:3585
+dispatchEventForPluginEventSystem @ chunk-LPF6KSF2.js?v=408de889:7205
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-LPF6KSF2.js?v=408de889:5484
+dispatchEvent @ chunk-LPF6KSF2.js?v=408de889:5478
+dispatchDiscreteEvent @ chunk-LPF6KSF2.js?v=408de889:5455
+add-job.tsx:1002 Update button clicked manually
+add-job.tsx:323 Form submitted - Values: {customerName: 'Pratik', phoneNumber: '+918975623356', emailAddress: 'raneaniket23@gmail.com', referralSource: 'Friend/Family', referrerName: 'Andy', …}
+add-job.tsx:326 Starting manual validation...
+add-job.tsx:328 Manual validation result: false
+add-job.tsx:332 Validation failed with errors: {services: Array(1), ppfs: Array(1), accessories: Array(1)}
+onSubmit @ add-job.tsx:332
+await in onSubmit
+onClick @ add-job.tsx:1004
+callCallback2 @ chunk-LPF6KSF2.js?v=408de889:3680
+invokeGuardedCallbackDev @ chunk-LPF6KSF2.js?v=408de889:3705
+invokeGuardedCallback @ chunk-LPF6KSF2.js?v=408de889:3739
+invokeGuardedCallbackAndCatchFirstError @ chunk-LPF6KSF2.js?v=408de889:3742
+executeDispatch @ chunk-LPF6KSF2.js?v=408de889:7046
+processDispatchQueueItemsInOrder @ chunk-LPF6KSF2.js?v=408de889:7066
+processDispatchQueue @ chunk-LPF6KSF2.js?v=408de889:7075
+dispatchEventsForPlugins @ chunk-LPF6KSF2.js?v=408de889:7083
+(anonymous) @ chunk-LPF6KSF2.js?v=408de889:7206
+batchedUpdates$1 @ chunk-LPF6KSF2.js?v=408de889:18966
+batchedUpdates @ chunk-LPF6KSF2.js?v=408de889:3585
+dispatchEventForPluginEventSystem @ chunk-LPF6KSF2.js?v=408de889:7205
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-LPF6KSF2.js?v=408de889:5484
+dispatchEvent @ chunk-LPF6KSF2.js?v=408de889:5478
+dispatchDiscreteEvent @ chunk-LPF6KSF2.js?v=408de889:5455

@@ -1,0 +1,42 @@
+Prompt:
+"I have an invoice management system for an auto service business. When invoices are created, they consume PPF (Paint Protection Film) roll inventory. I need to implement a feature where deleting an invoice replenishes the roll quantities back to inventory.
+Current Issue:
+
+When I delete an invoice, the roll quantities are NOT being restored
+Console logs and server logs I added are NOT appearing at all when deletion happens
+This suggests the deletion code path might not be executing properly
+
+System Details:
+
+Invoice contains service items including PPF items
+PPF items have a 'Quantity' field that specifies how many sqft were consumed from rolls
+In the Masters section, there's a 'Garware Elite' PPF product with roll inventory (Roll1: 70 sqft, Roll2: 1190 sqft, Roll3: 3000 sqft, Roll4: 4000 sqft)
+When an invoice is created, it deducts the quantity from the appropriate rolls
+Example: Invoice AG-2026-0001 has a PPF item consuming from Roll2 (400sqft from Roll2, then 120sqft from Roll1)
+
+What I need:
+
+Fix the invoice deletion handler so it actually executes (logs aren't appearing)
+Implement logic to restore roll quantities when invoice is deleted
+The restoration should add back the exact quantities that were consumed from each roll
+
+Can you help me debug why the deletion code isn't running and implement the roll quantity restoration feature?"
+
+This prompt gives clear context about your problem and what you need fixed!only the invoice2:49 PMHere's a simplified prompt focused only on the invoice deletion issue:
+
+Prompt:
+"I have an invoice deletion feature that's not working. When I click delete on an invoice, nothing happens - even the console.log and server logs I added are not appearing at all.
+Current Issue:
+
+Delete button exists on the invoice
+When clicked, no logs appear (neither client-side console.log nor server-side logs)
+This means the delete handler is not executing at all
+
+What I need:
+Fix the invoice deletion so that:
+
+The delete handler actually executes when the delete button is clicked
+Console/server logs appear to confirm the code is running
+The invoice gets deleted from the database
+
+The main problem is that the deletion code path itself is not being triggered. Can you help debug why the delete functionality isn't executing?"

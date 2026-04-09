@@ -1,0 +1,36 @@
+Here's a prompt describing the issue:
+
+---
+
+**Issue: Inconsistent UI Behavior When Adding PPF Rolls - New Job vs Edit Job**
+
+I have an Auto Gamma management system where users can add PPF (Paint Protection Film) jobs with multiple rolls. There's an inconsistency in how the UI handles adding rolls between creating a new job and editing an existing job.
+
+**Current Behavior:**
+
+**Scenario 1 - Adding PPF during new job creation (Image 1):**
+- When adding a PPF type for the first time, the system displays a single card/section
+- User selects: PPF type (Garware Elite), Warranty (TPU 5 Years Gloss), and Rolls
+- The "SELECTED PPF" section shows: "Garware Elite (Small Cars - TPU 5 Years Gloss) - Quantity: 100sqft (from Roll1), Quantity: 100sqft (from Roll2)"
+- All roll selections are grouped together in ONE card under the same PPF entry
+- Shows "(1 added)" in the PPF section header
+
+**Scenario 2 - Adding PPF rolls during job edit (Image 2):**
+- When editing an existing job and adding additional rolls to the same PPF type
+- The system creates SEPARATE cards for each roll selection
+- The "SELECTED PPF" section now shows TWO separate entries:
+  1. "Garware Elite (Small Cars - TPU 5 Years Gloss) - Quantity: 100sqft (from Roll2)"
+  2. "Garware Elite (Small Cars - TPU 5 Years Gloss) - Quantity: 400sqft (from Roll1)"
+- Shows "(2 added)" in the PPF section header
+- Each roll appears as a separate card with its own delete button
+
+**Expected Behavior:**
+
+The UI should behave consistently in both scenarios:
+- Whether adding rolls during initial job creation OR during job editing, all rolls for the same PPF type and warranty combination should be grouped together in a SINGLE card
+- The display should show: "Garware Elite (Small Cars - TPU 5 Years Gloss) - Quantity: XXXsqft (from Roll1), Quantity: XXXsqft (from Roll2)" as ONE entry
+- Should maintain "(1 added)" status when it's the same PPF type/warranty combination
+
+**Technical Context:**
+
+There appears to be different logic handling PPF roll additions between the "Add Job" flow and the "Edit Job" flow. The edit flow is creating duplicate/separate cards for the same PPF configuration instead of merging them into a single grouped entry like the new job creation flow does.

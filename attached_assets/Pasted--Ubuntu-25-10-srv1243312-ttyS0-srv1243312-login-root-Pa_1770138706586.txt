@@ -1,0 +1,61 @@
+
+Ubuntu 25.10 srv1243312 ttyS0
+
+srv1243312 login: root
+Password: 
+Welcome to Ubuntu 25.10 (GNU/Linux 6.17.0-8-generic x86_64)
+
+ * Documentation:  https://docs.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+ System information as of Tue Feb  3 17:06:22 UTC 2026
+
+  System load:  0.71               Processes:             109
+  Usage of /:   13.9% of 47.35GB   Users logged in:       0
+  Memory usage: 12%                IPv4 address for eth0: 72.60.200.203
+  Swap usage:   0%                 IPv6 address for eth0: 2a02:4780:12:8508::1
+  GNU nano 8.4     /etc/nginx/sites-available/newcrm.autogamma.in               
+server {
+    listen 80;
+    server_name newcrm.autogamma.in;
+
+    location / {
+        proxy_pass http://localhost:3004;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+
+
+
+
+
+
+
+
+                   sudo ln -s /etc/nginx/sites-available/newcrm.autogamma.in /etc/nginx/sites-enabled/
+sudo nginx -t12:/# sudo ln -s /etc/nginx/sites-available/newcrm.autogamma.in /etc/nginx/sites-enabled/
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+root@srv1243312:/# ^[[200~sudo systemctl reload nginx~
+sudo: command not found
+root@srv1243312:/# sudo systemctl reload nginx
+root@srv1243312:/# sudo certbot --nginx -d newcrm.autogamma.in
+
+Saving debug log to /var/log/letsencrypt/letsencrypt.log
+Requesting a certificate for newcrm.autogamma.in
+
+Certbot failed to authenticate some domains (authenticator: nginx). The Certificate Authority reported these problems:
+  Domain: newcrm.autogamma.in
+  Type:   connection
+  Detail: 72.60.200.203: Fetching http://newcrm.autogamma.in/.well-known/acme-challenge/nmLcmFx0UFwgMQPgcBQ7nWwCU0mTGSzqrFrPE5EYtYI: Timeout during connect (likely firewall problem)
+
+Hint: The Certificate Authority failed to verify the temporary nginx configuration changes made by Certbot. Ensure the listed domains point to this nginx server and that it is accessible from the internet.
+
+Some challenges have failed.
+Ask for help or search for solutions at https://community.letsencrypt.org. See the logfile /var/log/letsencrypt/letsencrypt.log or re-run Certbot with -v for more details.
+root@srv1243312:/# 

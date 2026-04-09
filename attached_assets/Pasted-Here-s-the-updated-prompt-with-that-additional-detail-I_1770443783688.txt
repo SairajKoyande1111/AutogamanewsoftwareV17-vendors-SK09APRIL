@@ -1,0 +1,104 @@
+Here's the updated prompt with that additional detail:
+
+---
+
+**Issue: Inconsistent UI Behavior When Adding PPF Rolls - New Job vs Edit Job**
+
+I have an Auto Gamma management system where users can add PPF (Paint Protection Film) jobs with multiple rolls. There's an inconsistency in how the UI handles adding rolls between creating a new job and editing an existing job.
+
+**Current Behavior:**
+
+**Scenario 1 - Adding PPF during new job creation (Image 1):**
+- When adding a PPF type for the first time, the system displays a single card/section
+- User selects: PPF type (Garware Elite), Warranty (TPU 5 Years Gloss), and Rolls
+- The "SELECTED PPF" section shows: "Garware Elite (Small Cars - TPU 5 Years Gloss) - Quantity: 100sqft (from Roll1), Quantity: 100sqft (from Roll2)"
+- All roll selections are grouped together in ONE card under the same PPF entry
+- Shows "(1 added)" in the PPF section header
+
+**Scenario 2 - Adding PPF rolls during job edit (Image 2):**
+- When editing an existing job and adding additional rolls to the same PPF type
+- The system creates SEPARATE cards for each roll selection
+- The "SELECTED PPF" section now shows TWO separate entries:
+  1. "Garware Elite (Small Cars - TPU 5 Years Gloss) - Quantity: 100sqft (from Roll2)"
+  2. "Garware Elite (Small Cars - TPU 5 Years Gloss) - Quantity: 400sqft (from Roll1)"
+- Shows "(2 added)" in the PPF section header
+- Each roll appears as a separate card with its own delete button
+
+**Expected Behavior:**
+
+The UI should behave consistently in both scenarios:
+- Whether adding rolls during initial job creation OR during job editing, all rolls for the same PPF type and warranty combination should be grouped together in a SINGLE card
+- The display should show: "Garware Elite (Small Cars - TPU 5 Years Gloss) - Quantity: XXXsqft (from Roll1), Quantity: XXXsqft (from Roll2)" as ONE entry
+- Should maintain "(1 added)" status when it's the same PPF type/warranty combination
+
+**Critical Finding:**
+
+While editing the job, **the existing PPF data is being fetched properly from the backend**, but **the system is NOT detecting the existing PPF card properly**. This causes it to create a new separate card instead of adding the new roll to the existing PPF card. The grouping/merging logic that works during new job creation is failing during edit mode, even though the data structure appears to be correct.
+
+**Debugging Request:**
+
+Please add console.log statements to help diagnose this issue:
+
+1. **When loading existing job data in edit mode:**
+   ```javascript
+   console.log('=== Loading Job Data for Edit ===');
+   console.log('Fetched Job Data:', jobData);
+   console.log('Existing PPF List:', existingPPFList);
+   console.log('PPF structure:', JSON.stringify(existingPPFList, null, 2));
+   ```
+
+2. **When adding a PPF roll (both in new job and edit job flows):**
+   ```javascript
+   console.log('=== Adding PPF Roll ===');
+   console.log('Current PPF List:', ppfList); // or whatever state holds the PPF selections
+   console.log('Selected PPF:', selectedPPF);
+   console.log('Selected Warranty:', selectedWarranty);
+   console.log('Selected Roll:', selectedRoll);
+   console.log('Quantity Used:', quantityUsed);
+   ```
+
+3. **When checking for existing PPF match (the failing detection logic):**
+   ```javascript
+   console.log('=== Checking for Existing PPF Match ===');
+   console.log('Looking for PPF:', selectedPPF);
+   console.log('Looking for Warranty:', selectedWarranty);
+   console.log('Existing PPF List to search:', ppfList);
+   console.log('Found existing match?:', existingPPF);
+   console.log('Match index:', matchIndex);
+   console.log('Comparison details:', {
+     selectedPPFId: selectedPPF?.id,
+     selectedWarrantyId: selectedWarranty?.id,
+     existingPPFIds: ppfList.map(p => ({ ppfId: p.ppfId, warrantyId: p.warrantyId }))
+   });
+   ```
+
+4. **Before rendering the SELECTED PPF section:**
+   ```javascript
+   console.log('=== Rendering Selected PPF ===');
+   console.log('PPF Array:', ppfArray); // the array being mapped to render cards
+   console.log('Is Edit Mode:', isEditMode); // or similar flag
+   console.log('Number of PPF entries:', ppfArray.length);
+   console.log('Each entry structure:', ppfArray.map(p => ({
+     ppf: p.ppfName,
+     warranty: p.warrantyName,
+     rolls: p.rolls
+   })));
+   ```
+
+5. **In the "Add PPF" button click handler:**
+   ```javascript
+   console.log('=== Add PPF Button Clicked ===');
+   console.log('Before add - PPF count:', ppfList.length);
+   console.log('Attempting to add to existing or create new?:', shouldAddToExisting);
+   console.log('After add - PPF count:', updatedPPFList.length);
+   console.log('Updated PPF List:', updatedPPFList);
+   ```
+
+This will help identify:
+- Whether the fetched data structure differs from newly created PPF entries
+- Why the existing PPF card detection/matching logic is failing in edit mode
+- If there's a difference in property names, IDs, or data types between fetched and new data
+- Where the grouping/separation decision is being made incorrectly
+- If the state comparison logic is using wrong identifiers (e.g., comparing objects instead of IDs)
+
+---
