@@ -196,8 +196,6 @@ interface ItemRowProps {
   onRemove: (idx: number) => void;
 }
 
-const ITEM_GRID = "grid-cols-[88px_1fr_124px_60px_72px_88px_88px_72px_34px]";
-
 function ItemRow({ idx, item, ppfMasters, accessories, categories, vehicleTypes, onChange, onRemove }: ItemRowProps) {
   const [isNewPPF, setIsNewPPF] = useState(false);
   const [isNewCategory, setIsNewCategory] = useState(false);
@@ -236,15 +234,14 @@ function ItemRow({ idx, item, ppfMasters, accessories, categories, vehicleTypes,
   };
 
   return (
-    <div className="border-b border-border/40 last:border-0">
-      {/* Main row — aligns with table header */}
-      <div className={`grid ${ITEM_GRID} gap-x-2 px-3 py-2 items-center`}>
-        {/* Type */}
+    <div className="rounded-lg border border-border/60 bg-card space-y-0 overflow-hidden mb-2 last:mb-0">
+      {/* Row 1: Type badge + full-width item name + delete */}
+      <div className="flex items-start gap-2 p-3 pb-2">
         <Select
           value={item.itemType}
           onValueChange={v => { setIsNewPPF(false); setIsNewCategory(false); setIsNewAccessory(false); onChange(idx, { ...item, itemType: v as "PPF" | "Accessory", name: "", categoryName: "", unit: v === "Accessory" ? "pcs" : "sqft" }); }}
         >
-          <SelectTrigger data-testid={`select-item-type-${idx}`} className="h-8 text-xs">
+          <SelectTrigger data-testid={`select-item-type-${idx}`} className="h-8 text-xs w-[100px] flex-shrink-0">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -253,22 +250,17 @@ function ItemRow({ idx, item, ppfMasters, accessories, categories, vehicleTypes,
           </SelectContent>
         </Select>
 
-        {/* Item Name — PPF brand or Category + Accessory stacked */}
-        <div className="min-w-0">
+        {/* Item name — full width */}
+        <div className="flex-1 min-w-0">
           {item.itemType === "PPF" && (
             isNewPPF ? (
-              <div className="flex gap-1">
-                <Input
-                  data-testid={`input-new-ppf-name-${idx}`}
-                  className="h-8 text-xs flex-1"
-                  placeholder="New PPF brand name..."
-                  value={item.name}
-                  autoFocus
-                  onChange={e => onChange(idx, { ...item, name: e.target.value })}
-                />
+              <div className="flex gap-1.5">
+                <Input data-testid={`input-new-ppf-name-${idx}`} className="h-8 text-xs flex-1"
+                  placeholder="New PPF brand name..." value={item.name} autoFocus
+                  onChange={e => onChange(idx, { ...item, name: e.target.value })} />
                 <button type="button" onClick={() => { setIsNewPPF(false); onChange(idx, { ...item, name: "" }); }}
-                  className="h-8 w-7 flex items-center justify-center rounded border border-border text-muted-foreground hover:text-destructive transition-colors flex-shrink-0">
-                  <X className="h-3 w-3" />
+                  className="h-8 w-8 flex items-center justify-center rounded border border-border/60 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0">
+                  <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             ) : (
@@ -286,14 +278,14 @@ function ItemRow({ idx, item, ppfMasters, accessories, categories, vehicleTypes,
             )
           )}
           {item.itemType === "Accessory" && (
-            <div className="flex flex-col gap-1">
+            <div className="flex gap-2">
               {isNewCategory ? (
-                <Input data-testid={`input-new-category-${idx}`} className="h-8 text-xs"
-                  placeholder="New category..." value={item.categoryName} autoFocus
+                <Input data-testid={`input-new-category-${idx}`} className="h-8 text-xs flex-1"
+                  placeholder="New category name..." value={item.categoryName} autoFocus
                   onChange={e => onChange(idx, { ...item, categoryName: e.target.value })} />
               ) : (
                 <Select value={item.categoryName} onValueChange={handleCategorySelect}>
-                  <SelectTrigger data-testid={`select-category-${idx}`} className="h-8 text-xs w-full">
+                  <SelectTrigger data-testid={`select-category-${idx}`} className="h-8 text-xs flex-1">
                     <SelectValue placeholder="Category..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -305,12 +297,12 @@ function ItemRow({ idx, item, ppfMasters, accessories, categories, vehicleTypes,
                 </Select>
               )}
               {isNewAccessory || isNewCategory ? (
-                <Input data-testid={`input-new-accessory-name-${idx}`} className="h-8 text-xs"
+                <Input data-testid={`input-new-accessory-name-${idx}`} className="h-8 text-xs flex-1"
                   placeholder="Accessory name..." value={item.name}
                   onChange={e => onChange(idx, { ...item, name: e.target.value })} />
               ) : (
                 <Select value={item.name} onValueChange={handleAccessorySelect} disabled={!item.categoryName}>
-                  <SelectTrigger data-testid={`select-acc-item-${idx}`} className="h-8 text-xs w-full">
+                  <SelectTrigger data-testid={`select-acc-item-${idx}`} className="h-8 text-xs flex-1">
                     <SelectValue placeholder={item.categoryName ? "Item..." : "Pick category first"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -327,63 +319,63 @@ function ItemRow({ idx, item, ppfMasters, accessories, categories, vehicleTypes,
           )}
         </div>
 
-        {/* HSN Code */}
-        <HsnCombobox value={(item as any).hsnCode || ""} onChange={v => onChange(idx, { ...item, hsnCode: v })} idx={idx} />
-
-        {/* Qty */}
-        <Input data-testid={`input-item-qty-${idx}`} className="h-8 text-xs text-center"
-          type="number" min={0} placeholder="Qty" value={item.quantity}
-          onChange={e => onChange(idx, { ...item, quantity: Number(e.target.value) })} />
-
-        {/* Unit */}
-        <Select value={item.unit} onValueChange={v => onChange(idx, { ...item, unit: v })}>
-          <SelectTrigger data-testid={`select-item-unit-${idx}`} className="h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {["sqft", "pcs", "roll", "ltr", "kg", "set", "box"].map(u => (
-              <SelectItem key={u} value={u}>{u}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Unit Price */}
-        <Input data-testid={`input-item-price-${idx}`} className="h-8 text-xs"
-          type="number" min={0} placeholder="₹ Cost"
-          value={item.unitPrice}
-          onChange={e => onChange(idx, { ...item, unitPrice: Number(e.target.value) })} />
-
-        {/* Selling Price */}
-        <Input data-testid={`input-item-selling-price-${idx}`} className="h-8 text-xs"
-          type="number" min={0} placeholder="₹ Sell"
-          value={(item as any).sellingPrice ?? 0}
-          onChange={e => onChange(idx, { ...item, sellingPrice: Number(e.target.value) })} />
-
-        {/* Amount */}
-        <span className="text-xs font-semibold text-primary whitespace-nowrap text-right">
-          {formatCurrency(item.quantity * item.unitPrice)}
-        </span>
-
-        {/* Delete */}
         <button type="button" onClick={() => onRemove(idx)}
-          className="h-8 w-8 flex items-center justify-center rounded text-muted-foreground hover:text-destructive transition-colors mx-auto">
+          className="h-8 w-8 flex items-center justify-center rounded border border-border/60 text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors flex-shrink-0">
           <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      {/* PPF Roll Name sub-row */}
+      {/* PPF Roll Name */}
       {item.itemType === "PPF" && item.name && (
         <div className="px-3 pb-2">
-          <Input data-testid={`input-roll-name-${idx}`} className="h-7 text-xs"
-            placeholder="Roll name (e.g. Roll A, Batch #001)..."
+          <Input data-testid={`input-roll-name-${idx}`} className="h-8 text-xs"
+            placeholder="Roll name / Batch (e.g. Roll A, AA10190223)..."
             value={(item as any).rollName || ""}
             onChange={e => onChange(idx, { ...item, rollName: e.target.value })} />
         </div>
       )}
 
+      {/* Row 2: Data fields with inline column labels */}
+      <div className="border-t border-border/40 bg-muted/20 px-3 py-2.5">
+        <div className="grid grid-cols-[1fr_68px_76px_100px_100px_80px] gap-3 mb-1">
+          <span className="text-[10px] font-medium text-muted-foreground">HSN Code</span>
+          <span className="text-[10px] font-medium text-muted-foreground text-center">Qty</span>
+          <span className="text-[10px] font-medium text-muted-foreground">Unit</span>
+          <span className="text-[10px] font-medium text-muted-foreground">Unit Price (₹)</span>
+          <span className="text-[10px] font-medium text-muted-foreground">Sell Price (₹)</span>
+          <span className="text-[10px] font-medium text-muted-foreground text-right">Amount</span>
+        </div>
+        <div className="grid grid-cols-[1fr_68px_76px_100px_100px_80px] gap-3 items-center">
+          <HsnCombobox value={(item as any).hsnCode || ""} onChange={v => onChange(idx, { ...item, hsnCode: v })} idx={idx} />
+          <Input data-testid={`input-item-qty-${idx}`} className="h-8 text-xs text-center"
+            type="number" min={0} placeholder="Qty" value={item.quantity}
+            onChange={e => onChange(idx, { ...item, quantity: Number(e.target.value) })} />
+          <Select value={item.unit} onValueChange={v => onChange(idx, { ...item, unit: v })}>
+            <SelectTrigger data-testid={`select-item-unit-${idx}`} className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {["sqft", "pcs", "roll", "ltr", "kg", "set", "box"].map(u => (
+                <SelectItem key={u} value={u}>{u}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input data-testid={`input-item-price-${idx}`} className="h-8 text-xs"
+            type="number" min={0} placeholder="0" value={item.unitPrice}
+            onChange={e => onChange(idx, { ...item, unitPrice: Number(e.target.value) })} />
+          <Input data-testid={`input-item-selling-price-${idx}`} className="h-8 text-xs"
+            type="number" min={0} placeholder="0"
+            value={(item as any).sellingPrice ?? 0}
+            onChange={e => onChange(idx, { ...item, sellingPrice: Number(e.target.value) })} />
+          <span className="text-sm font-bold text-primary whitespace-nowrap text-right">
+            {formatCurrency(item.quantity * item.unitPrice)}
+          </span>
+        </div>
+      </div>
+
       {/* Vehicle type pricing (new PPF only) */}
       {item.itemType === "PPF" && isNewPPF && item.name && (
-        <div className="px-3 pb-2 border-t border-dashed border-border/60 pt-2">
+        <div className="px-3 pb-3 pt-1">
           <button type="button" onClick={() => setShowVehiclePricing(v => !v)}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
             {showVehiclePricing ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -419,7 +411,7 @@ function ItemRow({ idx, item, ppfMasters, accessories, categories, vehicleTypes,
 
       {/* Inline notices */}
       {(isNewCategory || isNewAccessory || (isNewPPF && item.name)) && (
-        <div className="px-3 pb-1.5">
+        <div className="px-3 pb-2">
           <p className="text-xs text-primary">
             {isNewCategory ? "New category & accessory" : isNewAccessory ? "New accessory" : "New PPF brand"} will be auto-created in Masters.
           </p>
@@ -524,42 +516,25 @@ function PurchaseForm({ vendorId, vendorName, purchase, onClose }: PurchaseFormP
           </Button>
         </div>
 
-        <div className="rounded-xl border border-border/60 overflow-hidden">
-          {/* Table header */}
-          <div className={`grid ${ITEM_GRID} gap-x-2 px-3 py-2 bg-muted/50 border-b border-border/60 text-xs font-medium text-muted-foreground`}>
-            <span>Type</span>
-            <span>Item / Name</span>
-            <span>HSN Code</span>
-            <span className="text-center">Qty</span>
-            <span>Unit</span>
-            <span>Unit Price</span>
-            <span>Sell Price</span>
-            <span className="text-right">Amount</span>
-            <span></span>
-          </div>
+        <div className="space-y-2">
+          {items.map((item, idx) => (
+            <ItemRow
+              key={idx}
+              idx={idx}
+              item={item}
+              ppfMasters={ppfMasters}
+              accessories={accessories}
+              categories={categories}
+              vehicleTypes={vehicleTypes}
+              onChange={updateItem}
+              onRemove={removeItem}
+            />
+          ))}
+        </div>
 
-          {/* Item rows */}
-          <div>
-            {items.map((item, idx) => (
-              <ItemRow
-                key={idx}
-                idx={idx}
-                item={item}
-                ppfMasters={ppfMasters}
-                accessories={accessories}
-                categories={categories}
-                vehicleTypes={vehicleTypes}
-                onChange={updateItem}
-                onRemove={removeItem}
-              />
-            ))}
-          </div>
-
-          {/* Footer total */}
-          <div className="flex justify-between items-center px-3 py-2 bg-muted/30 border-t border-border/60">
-            <span className="text-xs text-muted-foreground">{items.filter(i => i.name).length} item(s)</span>
-            <span className="text-sm font-bold text-primary">Total: {formatCurrency(total)}</span>
-          </div>
+        <div className="flex justify-between items-center pt-2 border-t border-border/60">
+          <span className="text-sm text-muted-foreground">{items.filter(i => i.name).length} item(s)</span>
+          <span className="text-base font-bold text-primary">Total: {formatCurrency(total)}</span>
         </div>
       </div>
 
