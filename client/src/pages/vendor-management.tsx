@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Plus, Search, Building2, Phone, Mail, MapPin, Edit2, Trash2,
   ShoppingCart, Package, CalendarDays, ChevronDown, ChevronUp, X,
-  ArrowLeft, LayoutGrid, List, ArrowUpDown,
+  ArrowLeft, LayoutGrid, List, ArrowUpDown, Eye, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -745,12 +745,6 @@ function VendorListRow({ vendor, purchases, onEdit, onDelete, onAddPurchase, onC
           <Button data-testid={`button-add-purchase-${vendor.id}`} size="sm" variant="outline" onClick={onAddPurchase} className="h-7 text-xs">
             <Plus className="h-3 w-3 mr-1" /> Purchase
           </Button>
-          <Button data-testid={`button-edit-vendor-${vendor.id}`} size="icon" variant="ghost" className="h-7 w-7" onClick={onEdit}>
-            <Edit2 className="h-3.5 w-3.5" />
-          </Button>
-          <Button data-testid={`button-delete-vendor-${vendor.id}`} size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={onDelete}>
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
         </div>
       </td>
     </tr>
@@ -770,10 +764,17 @@ interface VendorDetailViewProps {
 
 function VendorDetailView({ vendor, purchases, onBack, onEdit, onDelete, onAddPurchase, onEditPurchase }: VendorDetailViewProps) {
   const { toast } = useToast();
+  const [viewingPurchase, setViewingPurchase] = useState<VendorPurchase | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
+
   const vendorPurchases = purchases
     .filter(p => p.vendorId === vendor.id)
     .sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
   const totalSpend = vendorPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+
+  const totalPages = Math.ceil(vendorPurchases.length / PAGE_SIZE);
+  const pagedPurchases = vendorPurchases.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const deletePurchaseMutation = useMutation({
     mutationFn: (id: string) => apiRequest("DELETE", `/api/vendor-purchases/${id}`),
@@ -887,85 +888,189 @@ function VendorDetailView({ vendor, purchases, onBack, onEdit, onDelete, onAddPu
             <p className="text-sm text-muted-foreground/70 mt-1">Click "Add Purchase" to record the first purchase from this vendor</p>
           </div>
         ) : (
-          <div className="rounded-xl border border-border/60 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 border-b border-border/60">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Date</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Items</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Notes</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Amount</th>
-                  <th className="px-4 py-3 w-20"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40">
-                {vendorPurchases.map(p => (
-                  <tr data-testid={`row-vendor-purchase-${p.id}`} key={p.id} className="hover:bg-muted/20 transition-colors">
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div>
+          <>
+            <div className="rounded-xl border border-border/60 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 border-b border-border/60">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Date</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">No. of Items</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Amount</th>
+                    <th className="px-4 py-3 w-32 text-right font-medium text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  {pagedPurchases.map(p => (
+                    <tr data-testid={`row-vendor-purchase-${p.id}`} key={p.id} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <p className="text-sm font-medium text-foreground">
                           {p.purchaseDate ? formatDate(p.purchaseDate) : "—"}
                         </p>
-                        {p.receivedDate && (
-                          <p className="text-[10px] text-muted-foreground">Rcvd: {formatDate(p.receivedDate)}</p>
-                        )}
-                      </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-muted-foreground">
+                          {p.items.length} item{p.items.length !== 1 ? "s" : ""}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-primary whitespace-nowrap">
+                        {formatCurrency(p.totalAmount)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button data-testid={`button-view-purchase-${p.id}`} size="sm" variant="outline" className="h-7 text-xs"
+                            onClick={() => setViewingPurchase(p)}>
+                            <Eye className="h-3 w-3 mr-1" /> View
+                          </Button>
+                          <Button data-testid={`button-edit-purchase-${p.id}`} size="icon" variant="ghost" className="h-7 w-7"
+                            onClick={() => onEditPurchase(p)}>
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button data-testid={`button-delete-purchase-${p.id}`} size="icon" variant="ghost"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={() => deletePurchaseMutation.mutate(p.id!)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-muted/30 border-t border-border/60">
+                  <tr>
+                    <td colSpan={2} className="px-4 py-3 text-sm font-medium text-muted-foreground">
+                      {vendorPurchases.length} purchase{vendorPurchases.length !== 1 ? "s" : ""}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="space-y-1">
-                        {p.items.map((item: any, i: number) => (
-                          <div key={i} className="flex items-center gap-1.5 text-xs">
-                            {item.itemType && (
-                              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary flex-shrink-0">{item.itemType}</span>
-                            )}
-                            <span className="text-muted-foreground">
-                              {item.categoryName && item.categoryName !== "PPF" ? `${item.categoryName} › ` : ""}
-                              <span className="text-foreground font-medium">{item.name}</span>
-                              {" "}<span className="text-muted-foreground/70">× {item.quantity} {item.unit}</span>
-                            </span>
-                            <span className="ml-auto text-xs font-medium text-foreground flex-shrink-0">
-                              {formatCurrency(item.quantity * item.unitPrice)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      {p.notes ? (
-                        <span className="text-xs text-muted-foreground italic">{p.notes}</span>
-                      ) : <span className="text-xs text-muted-foreground/40">—</span>}
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold text-primary whitespace-nowrap">
-                      {formatCurrency(p.totalAmount)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button data-testid={`button-edit-purchase-${p.id}`} size="icon" variant="ghost" className="h-7 w-7"
-                          onClick={() => onEditPurchase(p)}>
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button data-testid={`button-delete-purchase-${p.id}`} size="icon" variant="ghost"
-                          className="h-7 w-7 text-destructive hover:text-destructive"
-                          onClick={() => deletePurchaseMutation.mutate(p.id!)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </td>
+                    <td colSpan={2} className="px-4 py-3 text-right font-bold text-primary">{formatCurrency(totalSpend)}</td>
                   </tr>
-                ))}
-              </tbody>
-              <tfoot className="bg-muted/30 border-t border-border/60">
-                <tr>
-                  <td colSpan={3} className="px-4 py-3 text-sm font-medium text-muted-foreground">
-                    {vendorPurchases.length} purchase{vendorPurchases.length !== 1 ? "s" : ""}
-                  </td>
-                  <td colSpan={2} className="px-4 py-3 text-right font-bold text-primary">{formatCurrency(totalSpend)}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-3 px-1">
+                <p className="text-xs text-muted-foreground">
+                  Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, vendorPurchases.length)} of {vendorPurchases.length}
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button size="icon" variant="outline" className="h-7 w-7" disabled={page === 1}
+                    onClick={() => setPage(p => p - 1)}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(pg => (
+                    <Button key={pg} size="sm" variant={pg === page ? "default" : "outline"}
+                      className="h-7 w-7 text-xs"
+                      onClick={() => setPage(pg)}>
+                      {pg}
+                    </Button>
+                  ))}
+                  <Button size="icon" variant="outline" className="h-7 w-7" disabled={page === totalPages}
+                    onClick={() => setPage(p => p + 1)}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
+
+      {/* Purchase Detail Dialog */}
+      {viewingPurchase && (
+        <Dialog open onOpenChange={() => setViewingPurchase(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Purchase Details</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Meta info */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Purchase Date</p>
+                  <p className="font-semibold text-foreground">
+                    {viewingPurchase.purchaseDate ? formatDate(viewingPurchase.purchaseDate) : "—"}
+                  </p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Received Date</p>
+                  <p className="font-semibold text-foreground">
+                    {viewingPurchase.receivedDate ? formatDate(viewingPurchase.receivedDate) : "—"}
+                  </p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Vendor</p>
+                  <p className="font-semibold text-foreground">{vendor.name}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Total Amount</p>
+                  <p className="font-bold text-primary text-base">{formatCurrency(viewingPurchase.totalAmount)}</p>
+                </div>
+              </div>
+
+              {/* Items */}
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">Items</p>
+                <div className="rounded-lg border border-border/60 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50 border-b border-border/40">
+                      <tr>
+                        <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Item</th>
+                        <th className="text-center px-3 py-2 text-xs font-medium text-muted-foreground">Qty</th>
+                        <th className="text-right px-3 py-2 text-xs font-medium text-muted-foreground">Rate</th>
+                        <th className="text-right px-3 py-2 text-xs font-medium text-muted-foreground">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/30">
+                      {viewingPurchase.items.map((item: any, i: number) => (
+                        <tr key={i} className="text-xs">
+                          <td className="px-3 py-2">
+                            <div>
+                              {item.itemType && (
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary mr-1">{item.itemType}</span>
+                              )}
+                              <span className="font-medium text-foreground">
+                                {item.categoryName && item.categoryName !== "PPF" ? `${item.categoryName} › ` : ""}
+                                {item.name}
+                              </span>
+                              {item.rollName && <span className="text-muted-foreground ml-1">({item.rollName})</span>}
+                              {item.hsnCode && <span className="block text-muted-foreground/60 font-mono mt-0.5">HSN: {item.hsnCode}</span>}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 text-center text-muted-foreground">{item.quantity} {item.unit}</td>
+                          <td className="px-3 py-2 text-right text-muted-foreground">{formatCurrency(item.unitPrice)}</td>
+                          <td className="px-3 py-2 text-right font-semibold text-foreground">{formatCurrency(item.quantity * item.unitPrice)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-muted/30 border-t border-border/40">
+                      <tr>
+                        <td colSpan={3} className="px-3 py-2 text-xs font-medium text-muted-foreground">Total</td>
+                        <td className="px-3 py-2 text-right text-sm font-bold text-primary">{formatCurrency(viewingPurchase.totalAmount)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {viewingPurchase.notes && (
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1">Notes</p>
+                  <p className="text-sm text-foreground bg-muted/40 rounded-lg px-3 py-2 italic">{viewingPurchase.notes}</p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-end gap-2 pt-1 border-t border-border/40">
+                <Button variant="outline" size="sm" onClick={() => setViewingPurchase(null)}>Close</Button>
+                <Button size="sm" onClick={() => { onEditPurchase(viewingPurchase); setViewingPurchase(null); }}>
+                  <Edit2 className="h-3.5 w-3.5 mr-1.5" /> Edit Purchase
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
