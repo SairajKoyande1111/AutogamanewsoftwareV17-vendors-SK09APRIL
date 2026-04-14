@@ -626,10 +626,12 @@ app.use((req, res, next) => {
         const newRoll = { name: rollName, stock: rollStock };
         const ppfPricing = Array.isArray(item.ppfPricing) ? item.ppfPricing : [];
 
+        const itemHsnCode = (item.hsnCode || "").trim();
         const existingPPF = ppfByName.get(itemName.toLowerCase());
         if (!existingPPF) {
           const created = await storage.createPPF({
             name: itemName,
+            hsnCode: itemHsnCode,
             pricingByVehicleType: ppfPricing,
             rolls: [newRoll],
           });
@@ -638,6 +640,7 @@ app.use((req, res, next) => {
           const existingRolls = existingPPF.rolls || [];
           const updatedPPF = await storage.updatePPF(existingPPF.id, {
             ...existingPPF,
+            hsnCode: itemHsnCode || existingPPF.hsnCode || "",
             rolls: [...existingRolls, newRoll],
           });
           if (updatedPPF) ppfByName.set(itemName.toLowerCase(), updatedPPF);
@@ -651,6 +654,7 @@ app.use((req, res, next) => {
           categoryNames.add(catName.toLowerCase());
         }
 
+        const itemHsnCode = (item.hsnCode || "").trim();
         const purchasedQty = Number(item.quantity) || 0;
         const accKey = `${catName.toLowerCase()}::${itemName.toLowerCase()}`;
         if (!accessoryKeys.has(accKey)) {
@@ -659,6 +663,7 @@ app.use((req, res, next) => {
             name: itemName,
             quantity: purchasedQty,
             price: Number(item.unitPrice) || 0,
+            hsnCode: itemHsnCode,
           });
           accessoryKeys.add(accKey);
         } else {
@@ -670,6 +675,7 @@ app.use((req, res, next) => {
           if (existing && existing.id) {
             await storage.updateAccessory(existing.id, {
               quantity: (existing.quantity || 0) + purchasedQty,
+              hsnCode: itemHsnCode || existing.hsnCode || "",
             });
           }
         }

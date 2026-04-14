@@ -52,6 +52,7 @@ export const ServiceMasterModel = mongoose.model("ServiceMaster", serviceMasterS
 
 const ppfMasterSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  hsnCode: { type: String, default: "" },
   pricingByVehicleType: [{
     vehicleType: String,
     options: [{
@@ -83,7 +84,8 @@ const accessoryMasterSchema = new mongoose.Schema({
   category: { type: String, required: true },
   name: { type: String, required: true },
   quantity: { type: Number, required: true },
-  price: { type: Number, required: true }
+  price: { type: Number, required: true },
+  hsnCode: { type: String, default: "" }
 });
 
 export const AccessoryMasterModel = mongoose.model("AccessoryMaster", accessoryMasterSchema);
@@ -251,6 +253,7 @@ const vendorMongoSchema = new mongoose.Schema({
   email: { type: String, default: "" },
   address: { type: String, default: "" },
   category: { type: String, default: "" },
+  categories: { type: [String], default: [] },
   notes: { type: String, default: "" },
   createdAt: { type: String, required: true },
 });
@@ -2134,27 +2137,35 @@ export class MongoStorage implements IStorage {
   }
 
   // Vendor Management
+  private normalizeVendor(v: any): Vendor {
+    const obj = v.toObject ? v.toObject() : v;
+    const cats: string[] = Array.isArray(obj.categories) && obj.categories.length > 0
+      ? obj.categories
+      : obj.category ? [obj.category] : [];
+    return { ...obj, id: obj._id?.toString() || obj.id, categories: cats } as Vendor;
+  }
+
   async getVendors(): Promise<Vendor[]> {
     const vendors = await VendorModel.find().sort({ createdAt: -1 });
-    return vendors.map(v => ({ ...v.toObject(), id: v._id.toString() }) as Vendor);
+    return vendors.map(v => this.normalizeVendor(v));
   }
 
   async getVendor(id: string): Promise<Vendor | undefined> {
     const v = await VendorModel.findById(id);
     if (!v) return undefined;
-    return { ...v.toObject(), id: v._id.toString() } as Vendor;
+    return this.normalizeVendor(v);
   }
 
   async createVendor(vendor: InsertVendor): Promise<Vendor> {
     const v = new VendorModel({ ...vendor, createdAt: new Date().toISOString() });
     await v.save();
-    return { ...v.toObject(), id: v._id.toString() } as Vendor;
+    return this.normalizeVendor(v);
   }
 
   async updateVendor(id: string, vendor: Partial<InsertVendor>): Promise<Vendor | undefined> {
     const v = await VendorModel.findByIdAndUpdate(id, vendor, { new: true });
     if (!v) return undefined;
-    return { ...v.toObject(), id: v._id.toString() } as Vendor;
+    return this.normalizeVendor(v);
   }
 
   async deleteVendor(id: string): Promise<boolean> {

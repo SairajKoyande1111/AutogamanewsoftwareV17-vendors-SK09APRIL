@@ -100,6 +100,7 @@ export const ppfRollSchema = z.object({
 export const ppfMasterSchema = z.object({
   id: z.string().optional(),
   name: z.string(),
+  hsnCode: z.string().optional().default(""),
   pricingByVehicleType: z.array(ppfVehiclePricingSchema),
   rolls: z.array(ppfRollSchema).optional().default([]),
 });
@@ -132,6 +133,7 @@ export const accessoryMasterSchema = z.object({
   name: z.string(),
   quantity: z.coerce.number(),
   price: z.coerce.number(),
+  hsnCode: z.string().optional().default(""),
 });
 
 export type AccessoryMaster = z.infer<typeof accessoryMasterSchema>;
@@ -356,6 +358,7 @@ export const vendorSchema = z.object({
   email: z.string().optional().default(""),
   address: z.string().optional().default(""),
   category: z.string().optional().default(""),
+  categories: z.array(z.string()).optional().default([]),
   notes: z.string().optional().default(""),
   createdAt: z.string().default(() => new Date().toISOString()),
 });

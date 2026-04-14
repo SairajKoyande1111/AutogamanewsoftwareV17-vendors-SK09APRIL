@@ -640,6 +640,21 @@ export default function AddJobPage() {
   const [serviceHsn, setServiceHsn] = useState("");
   const [ppfHsn, setPpfHsn] = useState("");
   const [accessoryHsn, setAccessoryHsn] = useState("");
+
+  useEffect(() => {
+    if (selectedPPF) {
+      const p = ppfMasters.find(m => m.id === selectedPPF);
+      if (p?.hsnCode) setPpfHsn(p.hsnCode);
+    }
+  }, [selectedPPF, ppfMasters]);
+
+  useEffect(() => {
+    if (selectedAccessory) {
+      const a = accessories.find(m => m.id === selectedAccessory);
+      if (a?.hsnCode) setAccessoryHsn(a.hsnCode);
+    }
+  }, [selectedAccessory, accessories]);
+
   const [laborBusiness, setLaborBusiness] = useState<string>("Auto Gamma");
   const [discountBusiness, setDiscountBusiness] = useState<string>("Auto Gamma");
   const [discountSplit, setDiscountSplit] = useState<{ autoGamma: number; agnx: number }>({ autoGamma: 0, agnx: 0 });

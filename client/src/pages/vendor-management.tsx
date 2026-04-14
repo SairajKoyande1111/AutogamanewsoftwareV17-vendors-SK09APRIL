@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Plus, Search, Building2, Phone, Mail, MapPin, Edit2, Trash2,
@@ -233,9 +234,21 @@ function VendorForm({ vendor, onClose }: VendorFormProps) {
   const [form, setForm] = useState({
     name: vendor?.name ?? "", contactPerson: vendor?.contactPerson ?? "",
     phone: vendor?.phone ?? "", email: vendor?.email ?? "",
-    address: vendor?.address ?? "", category: vendor?.category ?? "",
+    address: vendor?.address ?? "",
+    categories: vendor?.categories && vendor.categories.length > 0
+      ? vendor.categories
+      : vendor?.category ? [vendor.category] : [] as string[],
     notes: vendor?.notes ?? "",
   });
+
+  const toggleCategory = (cat: string) => {
+    setForm(f => ({
+      ...f,
+      categories: f.categories.includes(cat)
+        ? f.categories.filter(c => c !== cat)
+        : [...f.categories, cat],
+    }));
+  };
 
   const createMutation = useMutation({
     mutationFn: (data: typeof form) => apiRequest("POST", "/api/vendors", data),
@@ -268,12 +281,18 @@ function VendorForm({ vendor, onClose }: VendorFormProps) {
         </div>
         <div className="space-y-1">
           <Label>Category</Label>
-          <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
-            <SelectTrigger data-testid="select-vendor-category"><SelectValue placeholder="Select category" /></SelectTrigger>
-            <SelectContent>
-              {VENDOR_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-4 mt-1.5">
+            {VENDOR_CATEGORIES.map(cat => (
+              <label key={cat} className="flex items-center gap-2 cursor-pointer select-none">
+                <Checkbox
+                  data-testid={`checkbox-vendor-category-${cat.toLowerCase()}`}
+                  checked={form.categories.includes(cat)}
+                  onCheckedChange={() => toggleCategory(cat)}
+                />
+                <span className="text-sm font-medium">{cat}</span>
+              </label>
+            ))}
+          </div>
         </div>
         <div className="space-y-1">
           <Label>Phone</Label>
@@ -739,7 +758,9 @@ function PurchasePanel({ vendor, purchase, onBack }: PurchasePanelProps) {
           </div>
           <div>
             <span className="font-semibold text-foreground text-sm">{vendor.name}</span>
-            {vendor.category && <span className="text-xs text-muted-foreground ml-2">{vendor.category}</span>}
+            {vendor.categories && vendor.categories.length > 0 && (
+              <span className="text-xs text-muted-foreground ml-2">{vendor.categories.join(", ")}</span>
+            )}
           </div>
         </div>
         {(vendor.phone || vendor.contactPerson) && (
@@ -801,8 +822,12 @@ function VendorListRow({ vendor, purchases, onEdit, onDelete, onAddPurchase, onC
           </div>
           <div>
             <p data-testid={`text-vendor-name-${vendor.id}`} className="font-semibold text-foreground text-sm">{vendor.name}</p>
-            {vendor.category && (
-              <span className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary mt-0.5">{vendor.category}</span>
+            {vendor.categories && vendor.categories.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-0.5">
+                {vendor.categories.map(c => (
+                  <span key={c} className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary">{c}</span>
+                ))}
+              </div>
             )}
           </div>
         </div>
@@ -918,9 +943,9 @@ function VendorDetailView({ vendor, purchases, onBack, onEdit, onDelete, onAddPu
               <div>
                 <div className="flex items-center gap-2">
                   <h2 data-testid="text-detail-vendor-name" className="text-xl font-bold text-foreground">{vendor.name}</h2>
-                  {vendor.category && (
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">{vendor.category}</span>
-                  )}
+                  {vendor.categories && vendor.categories.length > 0 && vendor.categories.map(c => (
+                    <span key={c} className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">{c}</span>
+                  ))}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
                   {vendor.contactPerson && (
@@ -1276,11 +1301,12 @@ export default function VendorManagementPage() {
 
   const filteredVendors = vendors
     .filter(v => {
+      const cats = v.categories && v.categories.length > 0 ? v.categories : v.category ? [v.category] : [];
       const matchesSearch =
         v.name.toLowerCase().includes(vendorSearch.toLowerCase()) ||
         (v.contactPerson || "").toLowerCase().includes(vendorSearch.toLowerCase()) ||
-        (v.category || "").toLowerCase().includes(vendorSearch.toLowerCase());
-      const matchesFilter = vendorFilter === "all" || (v.category || "").toLowerCase() === vendorFilter.toLowerCase();
+        cats.some(c => c.toLowerCase().includes(vendorSearch.toLowerCase()));
+      const matchesFilter = vendorFilter === "all" || cats.some(c => c.toLowerCase() === vendorFilter.toLowerCase());
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
