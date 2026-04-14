@@ -504,7 +504,12 @@ export default function MastersPage() {
                 return (
                 <Card key={ppf.id}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                    <CardTitle className="text-lg">{ppf.name}</CardTitle>
+                    <div>
+                      <CardTitle className="text-lg">{ppf.name}</CardTitle>
+                      {(ppf as any).hsnCode && (
+                        <p className="text-xs text-muted-foreground mt-0.5">HSN: {(ppf as any).hsnCode}</p>
+                      )}
+                    </div>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" title="Manage Rolls" onClick={() => setManagingRollsPPF(ppf)}>
                         <Layers className="h-4 w-4" />
@@ -633,6 +638,9 @@ export default function MastersPage() {
                     <div>
                       <div className="text-[10px] uppercase text-muted-foreground mb-1">{accessory.category}</div>
                       <CardTitle className="text-lg">{accessory.name}</CardTitle>
+                      {(accessory as any).hsnCode && (
+                        <p className="text-xs text-muted-foreground mt-0.5">HSN: {(accessory as any).hsnCode}</p>
+                      )}
                     </div>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" onClick={() => setEditingAccessory(accessory)}>
@@ -786,6 +794,7 @@ function AddServiceForm({ onClose, vehicleTypes, initialData }: { onClose: () =>
 function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => void, vehicleTypes: VehicleType[], initialData?: PPFMaster }) {
   const { toast } = useToast();
   const [name, setName] = useState(initialData?.name || "");
+  const [hsnCode, setHsnCode] = useState((initialData as any)?.hsnCode || "");
   const [pricing, setPricing] = useState<any[]>(initialData?.pricingByVehicleType || []);
   const [rolls, setRolls] = useState<any[]>(initialData?.rolls || []);
 
@@ -847,9 +856,15 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
 
   return (
     <div className="space-y-6 py-4">
-      <div className="space-y-2">
-        <Label>PPF Name</Label>
-        <Input placeholder="e.g. Garware Premium" value={name} onChange={(e) => setName(e.target.value)} />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>PPF Name</Label>
+          <Input placeholder="e.g. Garware Premium" value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label>HSN Code</Label>
+          <Input placeholder="e.g. 39199090" value={hsnCode} onChange={(e) => setHsnCode(e.target.value)} />
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -934,7 +949,7 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
 
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button variant="outline" onClick={onClose}>Cancel</Button>
-        <Button onClick={() => ppfMutation.mutate({ name, pricingByVehicleType: pricing, rolls })}>
+        <Button onClick={() => ppfMutation.mutate({ name, hsnCode, pricingByVehicleType: pricing, rolls })}>
           {initialData ? "Update PPF" : "Save PPF"}
         </Button>
       </div>
@@ -1142,6 +1157,7 @@ function AddAccessoryForm({
   const [name, setName] = useState(initialData?.name || "");
   const [quantity, setQuantity] = useState(initialData?.quantity?.toString() || "0");
   const [price, setPrice] = useState(initialData?.price?.toString() || "0");
+  const [hsnCode, setHsnCode] = useState((initialData as any)?.hsnCode || "");
 
   const { data: accessories = [] } = useQuery<AccessoryMaster[]>({
     queryKey: [api.masters.accessories.list.path],
@@ -1223,13 +1239,23 @@ function AddAccessoryForm({
         </div>
       </div>
 
+      <div className="space-y-2">
+        <Label>HSN Code</Label>
+        <Input 
+          placeholder="e.g. 87089900" 
+          value={hsnCode} 
+          onChange={(e) => setHsnCode(e.target.value)} 
+        />
+      </div>
+
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button variant="outline" onClick={onClose}>Cancel</Button>
         <Button onClick={() => accessoryMutation.mutate({ 
           category, 
           name, 
           quantity: parseInt(quantity) || 0, 
-          price: parseInt(price) || 0 
+          price: parseInt(price) || 0,
+          hsnCode
         })}>
           {initialData ? "Update Accessory" : "Save Accessory"}
         </Button>

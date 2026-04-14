@@ -604,6 +604,36 @@ app.use((req, res, next) => {
     res.json(purchase);
   });
 
+  // Convert flat purchase pricing rows [{vehicleType, warranty, price}]
+  // into PPFMaster's nested format [{vehicleType, options:[{warrantyName, price}]}]
+  function flatPricingToByVehicleType(flatPricing: any[]): any[] {
+    const map = new Map<string, Array<{warrantyName: string; price: number}>>();
+    for (const row of flatPricing) {
+      if (!row.vehicleType || !row.warranty) continue;
+      const vtKey = row.vehicleType.trim();
+      if (!map.has(vtKey)) map.set(vtKey, []);
+      map.get(vtKey)!.push({ warrantyName: row.warranty.trim(), price: Number(row.price) || 0 });
+    }
+    return Array.from(map.entries()).map(([vehicleType, options]) => ({ vehicleType, options }));
+  }
+
+  // Merge incoming pricingByVehicleType into existing without overwriting existing entries
+  function mergePricing(existing: any[], incoming: any[]): any[] {
+    const merged = existing.map(e => ({ ...e, options: [...(e.options || [])] }));
+    for (const inc of incoming) {
+      const existingVT = merged.find(e => e.vehicleType === inc.vehicleType);
+      if (!existingVT) {
+        merged.push({ ...inc });
+      } else {
+        for (const opt of (inc.options || [])) {
+          const exists = existingVT.options.some((o: any) => o.warrantyName === opt.warrantyName);
+          if (!exists) existingVT.options.push(opt);
+        }
+      }
+    }
+    return merged;
+  }
+
   async function syncPurchaseItemsToMasters(items: any[]) {
     if (!items || !Array.isArray(items)) return;
     const [existingPPFs, existingAccessories, existingCategories] = await Promise.all([
@@ -624,7 +654,10 @@ app.use((req, res, next) => {
         const rollName = (item.rollName || "").trim() || `Roll ${new Date().toLocaleDateString("en-IN")}`;
         const rollStock = Number(item.quantity) || 0;
         const newRoll = { name: rollName, stock: rollStock };
-        const ppfPricing = Array.isArray(item.ppfPricing) ? item.ppfPricing : [];
+
+        // Convert flat pricing rows to PPFMaster nested format
+        const flatPricing = Array.isArray(item.ppfPricing) ? item.ppfPricing : [];
+        const newPricingByVehicleType = flatPricingToByVehicleType(flatPricing);
 
         const itemHsnCode = (item.hsnCode || "").trim();
         const existingPPF = ppfByName.get(itemName.toLowerCase());
@@ -632,15 +665,17 @@ app.use((req, res, next) => {
           const created = await storage.createPPF({
             name: itemName,
             hsnCode: itemHsnCode,
-            pricingByVehicleType: ppfPricing,
+            pricingByVehicleType: newPricingByVehicleType,
             rolls: [newRoll],
           });
           ppfByName.set(itemName.toLowerCase(), created);
         } else if (existingPPF.id) {
           const existingRolls = existingPPF.rolls || [];
+          const mergedPricing = mergePricing(existingPPF.pricingByVehicleType || [], newPricingByVehicleType);
           const updatedPPF = await storage.updatePPF(existingPPF.id, {
             ...existingPPF,
             hsnCode: itemHsnCode || existingPPF.hsnCode || "",
+            pricingByVehicleType: mergedPricing,
             rolls: [...existingRolls, newRoll],
           });
           if (updatedPPF) ppfByName.set(itemName.toLowerCase(), updatedPPF);
@@ -662,7 +697,7 @@ app.use((req, res, next) => {
             category: catName,
             name: itemName,
             quantity: purchasedQty,
-            price: Number(item.unitPrice) || 0,
+            price: Number(item.sellingPrice) || Number(item.unitPrice) || 0,
             hsnCode: itemHsnCode,
           });
           accessoryKeys.add(accKey);

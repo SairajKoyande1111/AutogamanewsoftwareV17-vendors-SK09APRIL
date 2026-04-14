@@ -524,6 +524,7 @@ export class MongoStorage implements IStorage {
     return ppfs.map(s => ({
       id: s._id.toString(),
       name: s.name,
+      hsnCode: (s as any).hsnCode || "",
       pricingByVehicleType: s.pricingByVehicleType as any,
       rolls: s.rolls as any
     }));
@@ -535,6 +536,7 @@ export class MongoStorage implements IStorage {
     return {
       id: s._id.toString(),
       name: s.name,
+      hsnCode: (s as any).hsnCode || "",
       pricingByVehicleType: s.pricingByVehicleType as any,
       rolls: s.rolls as any
     };
@@ -546,6 +548,7 @@ export class MongoStorage implements IStorage {
     return {
       id: s._id.toString(),
       name: s.name,
+      hsnCode: (s as any).hsnCode || "",
       pricingByVehicleType: s.pricingByVehicleType as any,
       rolls: s.rolls as any
     };
@@ -563,7 +566,8 @@ export class MongoStorage implements IStorage {
       category: a.category,
       name: a.name,
       quantity: a.quantity,
-      price: a.price
+      price: a.price,
+      hsnCode: (a as any).hsnCode || ""
     }));
   }
 
@@ -575,7 +579,8 @@ export class MongoStorage implements IStorage {
       category: a.category,
       name: a.name,
       quantity: a.quantity,
-      price: a.price
+      price: a.price,
+      hsnCode: (a as any).hsnCode || ""
     };
   }
 
@@ -587,7 +592,8 @@ export class MongoStorage implements IStorage {
       category: a.category,
       name: a.name,
       quantity: a.quantity,
-      price: a.price
+      price: a.price,
+      hsnCode: (a as any).hsnCode || ""
     };
   }
 
