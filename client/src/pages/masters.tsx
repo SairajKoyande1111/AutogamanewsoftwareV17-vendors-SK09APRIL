@@ -879,8 +879,12 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
           <Input placeholder="e.g. Garware Premium" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label>HSN Code</Label>
-          <Input placeholder="e.g. 39199090" value={hsnCode} onChange={(e) => setHsnCode(e.target.value)} />
+          <Label>HSN Code <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
+          <HsnCombobox
+            value={hsnCode}
+            onChange={setHsnCode}
+            placeholder="Search or type HSN code..."
+          />
         </div>
       </div>
 
@@ -1257,11 +1261,11 @@ function AddAccessoryForm({
       </div>
 
       <div className="space-y-2">
-        <Label>HSN Code</Label>
-        <Input 
-          placeholder="e.g. 87089900" 
-          value={hsnCode} 
-          onChange={(e) => setHsnCode(e.target.value)} 
+        <Label>HSN Code <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
+        <HsnCombobox
+          value={hsnCode}
+          onChange={setHsnCode}
+          placeholder="Search or type HSN code..."
         />
       </div>
 

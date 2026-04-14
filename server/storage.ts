@@ -491,6 +491,7 @@ export class MongoStorage implements IStorage {
     return services.map(s => ({
       id: s._id.toString(),
       name: s.name,
+      hsnCode: (s as any).hsnCode || "",
       pricingByVehicleType: s.pricingByVehicleType as any
     }));
   }
@@ -501,6 +502,7 @@ export class MongoStorage implements IStorage {
     return {
       id: s._id.toString(),
       name: s.name,
+      hsnCode: (s as any).hsnCode || "",
       pricingByVehicleType: s.pricingByVehicleType as any
     };
   }
@@ -511,6 +513,7 @@ export class MongoStorage implements IStorage {
     return {
       id: s._id.toString(),
       name: s.name,
+      hsnCode: (s as any).hsnCode || "",
       pricingByVehicleType: s.pricingByVehicleType as any
     };
   }
