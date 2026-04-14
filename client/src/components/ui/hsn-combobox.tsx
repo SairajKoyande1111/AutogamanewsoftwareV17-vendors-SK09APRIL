@@ -19,6 +19,7 @@ export const HSN_CODES = [
   { code: "851810",  description: "Speaker / Subwoofer / Amplifier" },
   { code: "85122020", description: "LED Headlights / Fog Lamps / LED Light Bar" },
   { code: "94054090", description: "Ambient Light" },
+  { code: "33030090", description: "Perfumes / Fragrance / Car Perfume" },
 ];
 
 export function HsnCombobox({
