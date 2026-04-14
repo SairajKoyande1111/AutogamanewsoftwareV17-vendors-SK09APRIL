@@ -42,6 +42,7 @@ export const UserModel = mongoose.model("User", userSchema);
 
 const serviceMasterSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  hsnCode: { type: String, default: "" },
   pricingByVehicleType: [{
     vehicleType: String,
     price: Number
