@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Wrench, Shield, Package, Car, X, Edit2, LayoutGrid, ChevronDown, ChevronUp, Archive, ArrowLeft, History, ArrowUpDown, ArrowUp, ArrowDown, Filter, RotateCcw, Layers, Search, Check } from "lucide-react";
 import { useState, useEffect } from "react";
+import { HsnCombobox } from "@/components/ui/hsn-combobox";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@shared/routes";
 import { ServiceMaster, VehicleType, PPFMaster, AccessoryMaster, AccessoryCategory, JobCard } from "@shared/schema";
@@ -738,11 +739,10 @@ function AddServiceForm({ onClose, vehicleTypes, initialData }: { onClose: () =>
         </div>
         <div className="space-y-2">
           <Label>HSN Code <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
-          <Input
-            placeholder="e.g. 39199090"
+          <HsnCombobox
             value={hsnCode}
-            onChange={(e) => setHsnCode(e.target.value)}
-            data-testid="input-service-hsn"
+            onChange={setHsnCode}
+            placeholder="Search or type HSN code..."
           />
         </div>
       </div>
