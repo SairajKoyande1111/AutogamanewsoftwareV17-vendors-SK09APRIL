@@ -74,7 +74,12 @@ function HsnCombobox({ value, onChange, idx }: { value: string; onChange: (v: st
   const openDropdown = () => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      setDropPos({ top: rect.bottom + window.scrollY + 4, left: rect.left + window.scrollX, width: Math.max(320, rect.width) });
+      const estimatedHeight = 220;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const top = spaceBelow < estimatedHeight
+        ? rect.top - estimatedHeight - 4
+        : rect.bottom + 4;
+      setDropPos({ top, left: rect.left, width: Math.max(320, rect.width) });
     }
     setOpen(true);
   };
@@ -149,7 +154,12 @@ function SearchableItemSelect({ value, onValueChange, options, placeholder, onAd
     if (disabled) return;
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      setDropPos({ top: rect.bottom + window.scrollY + 4, left: rect.left + window.scrollX, width: rect.width });
+      const estimatedHeight = 240;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const top = spaceBelow < estimatedHeight
+        ? rect.top - estimatedHeight - 4
+        : rect.bottom + 4;
+      setDropPos({ top, left: rect.left, width: rect.width });
     }
     setOpen(true);
   };

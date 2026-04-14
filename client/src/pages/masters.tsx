@@ -500,7 +500,7 @@ export default function MastersPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {ppfs.map((ppf) => {
-                const activeRolls = (ppf.rolls || []).filter(r => r.stock > 0);
+                const activeRolls = (ppf.rolls || []).filter(r => r.stock > 10);
                 return (
                 <Card key={ppf.id}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -960,8 +960,8 @@ function AddPPFForm({ onClose, vehicleTypes, initialData }: { onClose: () => voi
 function ManageRollsForm({ ppf, onClose }: { ppf: PPFMaster; onClose: () => void }) {
   const { toast } = useToast();
   const allRolls: any[] = ppf.rolls || [];
-  const usedRolls = allRolls.filter((r: any) => (r.stock || 0) === 0);
-  const [activeRolls, setActiveRolls] = useState<any[]>(allRolls.filter((r: any) => (r.stock || 0) > 0));
+  const usedRolls = allRolls.filter((r: any) => (r.stock || 0) <= 10);
+  const [activeRolls, setActiveRolls] = useState<any[]>(allRolls.filter((r: any) => (r.stock || 0) > 10));
   const [newRollName, setNewRollName] = useState("");
   const [newRollStock, setNewRollStock] = useState("");
   const [rollSearch, setRollSearch] = useState("");
