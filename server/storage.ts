@@ -1121,6 +1121,55 @@ export class MongoStorage implements IStorage {
     const existingJob = await JobCardModel.findById(id);
     if (!existingJob) return undefined;
 
+    // Preserve hsnCode from existing job card items when the incoming update has them missing/empty
+    if (jobCard.services && (existingJob as any).services?.length) {
+      const existingServicesHsn = new Map<string, string>();
+      ((existingJob as any).services as any[]).forEach((s: any) => {
+        const key = String(s.serviceId || s.id || s._id || "");
+        if (key && s.hsnCode) existingServicesHsn.set(key, s.hsnCode);
+      });
+      jobCard.services = (jobCard.services as any[]).map((s: any) => {
+        if (!s.hsnCode) {
+          const key = String(s.serviceId || s.id || "");
+          const fallback = existingServicesHsn.get(key);
+          if (fallback) return { ...s, hsnCode: fallback };
+        }
+        return s;
+      }) as any;
+    }
+
+    if (jobCard.ppfs && (existingJob as any).ppfs?.length) {
+      const existingPpfsHsn = new Map<string, string>();
+      ((existingJob as any).ppfs as any[]).forEach((p: any) => {
+        const key = String(p.ppfId || p.id || p._id || "");
+        if (key && p.hsnCode) existingPpfsHsn.set(key, p.hsnCode);
+      });
+      jobCard.ppfs = (jobCard.ppfs as any[]).map((p: any) => {
+        if (!p.hsnCode) {
+          const key = String(p.ppfId || p.id || "");
+          const fallback = existingPpfsHsn.get(key);
+          if (fallback) return { ...p, hsnCode: fallback };
+        }
+        return p;
+      }) as any;
+    }
+
+    if (jobCard.accessories && (existingJob as any).accessories?.length) {
+      const existingAccessoriesHsn = new Map<string, string>();
+      ((existingJob as any).accessories as any[]).forEach((a: any) => {
+        const key = String(a.accessoryId || a.id || a._id || "");
+        if (key && a.hsnCode) existingAccessoriesHsn.set(key, a.hsnCode);
+      });
+      jobCard.accessories = (jobCard.accessories as any[]).map((a: any) => {
+        if (!a.hsnCode) {
+          const key = String(a.accessoryId || a.id || "");
+          const fallback = existingAccessoriesHsn.get(key);
+          if (fallback) return { ...a, hsnCode: fallback };
+        }
+        return a;
+      }) as any;
+    }
+
     // Handle Accessory stock adjustments if accessories are being updated
     if (jobCard.accessories) {
       const oldAccessories = (existingJob.accessories || []) as any[];
@@ -1261,17 +1310,33 @@ export class MongoStorage implements IStorage {
     for (const biz of businesses) {
       const bizItems: any[] = [];
       let bizLaborCharge = 0;
+
+      // Fetch existing invoice first so we can use its hsnCode as a fallback
+      const existingInvoice = await InvoiceModel.findOne({ jobCardId: id, business: biz });
+
+      // Build a hsnCode fallback map from the existing invoice items (keyed by item name)
+      const existingInvoiceHsnMap = new Map<string, string>();
+      if (existingInvoice?.items) {
+        (existingInvoice.items as any[]).forEach((item: any) => {
+          if (item.hsnCode && item.name) {
+            existingInvoiceHsnMap.set(item.name, item.hsnCode);
+            // Also key by type+category for accessories and ppfs
+            if (item.category) existingInvoiceHsnMap.set(`${item.type}_${item.category}`, item.hsnCode);
+          }
+        });
+      }
       
       // Services
       j.services?.forEach(s => {
         if ((s as any).business === biz) {
+          const hsnCode = (s as any).hsnCode || existingInvoiceHsnMap.get(s.name) || "";
           bizItems.push({ 
             name: s.name, 
             price: s.price, 
             type: "Service",
             technician: (s as any).technician,
             vehicleType: (j as any).vehicleType,
-            hsnCode: (s as any).hsnCode || ""
+            hsnCode
           });
         }
       });
@@ -1279,6 +1344,8 @@ export class MongoStorage implements IStorage {
       // PPFs with detailed info
       j.ppfs?.forEach(p => {
         if ((p as any).business === biz) {
+          const ppfCategory = (p as any).ppfId || p.id;
+          const hsnCode = (p as any).hsnCode || existingInvoiceHsnMap.get(`PPF_${ppfCategory}`) || existingInvoiceHsnMap.get(p.name) || "";
           bizItems.push({ 
             name: p.name, 
             price: p.price, 
@@ -1287,8 +1354,8 @@ export class MongoStorage implements IStorage {
             vehicleType: (j as any).vehicleType,
             rollUsed: (p as any).rollUsed,
             technician: (p as any).technician,
-            category: (p as any).ppfId || p.id, // Use ppfId as category for stock replenishment
-            hsnCode: (p as any).hsnCode || ""
+            category: ppfCategory,
+            hsnCode
           });
         }
       });
@@ -1297,13 +1364,15 @@ export class MongoStorage implements IStorage {
       if (j.accessories) {
         for (const a of j.accessories) {
           if ((a as any).business === biz) {
+            const accCategory = (a as any).category || "";
+            const hsnCode = (a as any).hsnCode || existingInvoiceHsnMap.get(`Accessory_${accCategory}`) || existingInvoiceHsnMap.get(a.name) || "";
             bizItems.push({ 
               name: a.name, 
               price: a.price, 
               quantity: (a as any).quantity || 1, 
               type: "Accessory",
-              category: (a as any).category || "",
-              hsnCode: (a as any).hsnCode || ""
+              category: accCategory,
+              hsnCode
             });
           }
         }
@@ -1314,9 +1383,6 @@ export class MongoStorage implements IStorage {
         bizLaborCharge = j.laborCharge;
         bizItems.push({ name: "Labor Charge", price: j.laborCharge, type: "Labor" });
       }
-
-      // Find existing invoice for this business and job card
-      const existingInvoice = await InvoiceModel.findOne({ jobCardId: id, business: biz });
       
       if (bizItems.length > 0) {
         const itemsSubtotal = bizItems.reduce((acc, item) => acc + (item.price * (item.quantity || 1)), 0);
