@@ -65,10 +65,16 @@ function InvoiceHeader({ business, invoiceNo, date }: { business: string; invoic
           <img src={businessInfo.logo!} alt={businessInfo.name} className="h-16 object-contain" />
         )}
         <div className="text-sm text-slate-600 space-y-0.5 max-w-xs">
-          <p><span className="font-semibold text-slate-700">ADDRESS:</span> {businessInfo.address}</p>
+          {business !== "AGNX" && (
+            <p><span className="font-semibold text-slate-700">ADDRESS:</span> {businessInfo.address}</p>
+          )}
           <p><span className="font-semibold text-slate-700">CONTACT:</span> {businessInfo.phone}</p>
-          <p><span className="font-semibold text-slate-700">MAIL:</span> {businessInfo.email}</p>
-          <p><span className="font-semibold text-slate-700">WEBSITE:</span> {businessInfo.website}</p>
+          {business !== "AGNX" && (
+            <p><span className="font-semibold text-slate-700">MAIL:</span> {businessInfo.email}</p>
+          )}
+          {business !== "AGNX" && (
+            <p><span className="font-semibold text-slate-700">WEBSITE:</span> {businessInfo.website}</p>
+          )}
         </div>
       </div>
       
